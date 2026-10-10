@@ -10,13 +10,13 @@
 
 | Name | Address space |
 |---|---|
-| `vnet-netfound-dev` | `10.10.0.0/20` |
+| `vnet-netfound-dev-southeastasia-001` | `10.10.0.0/20` |
 
 ## Subnets
 
 | Subnet | CIDR | Usable IPs | Purpose | Status |
 |---|---|---|---|---|
-| `snet-web` | `10.10.1.0/24` | 251 | Internet-facing tier (load balancer, web servers) | Planned |
+| `snet-web` | `10.10.1.0/24` | 251 | Internet-facing tier (load balancer, web servers) | Deployed |
 | `snet-app` | `10.10.2.0/24` | 251 | Application tier, no direct internet inbound | Planned |
 | `snet-db` | `10.10.3.0/24` | 251 | Data tier, reachable only from the app tier | Planned |
 | `snet-pe` | `10.10.4.0/24` | 251 | Private endpoints | Reserved |
