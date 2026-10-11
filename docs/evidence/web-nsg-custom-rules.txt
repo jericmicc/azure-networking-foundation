@@ -1,0 +1,5 @@
+Name                             Priority    Access    Port    Source
+-------------------------------  ----------  --------  ------  -----------------
+Allow-HTTPS-Inbound              100         Allow     443     Internet
+Allow-AzureLoadBalancer-Inbound  4000        Allow     *       AzureLoadBalancer
+Deny-All-Inbound                 4096        Deny      *       *
