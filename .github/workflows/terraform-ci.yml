@@ -1,0 +1,33 @@
+name: terraform-ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v7
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: 1.16.5
+
+      - name: Format check
+        run: terraform fmt -check -recursive
+
+      - name: Init (no backend, no Azure login)
+        run: terraform init -backend=false
+
+      - name: Validate
+        run: terraform validate
