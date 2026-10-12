@@ -235,3 +235,31 @@ resource "azurerm_network_security_rule" "db_deny_all_outbound" {
   resource_group_name         = azurerm_resource_group.main.name
   network_security_group_name = azurerm_network_security_group.db.name
 }
+
+resource "azurerm_network_security_rule" "web_allow_app_outbound" {
+  name                        = "Allow-Web-To-App-Outbound"
+  priority                    = 100
+  direction                   = "Outbound"
+  access                      = "Allow"
+  protocol                    = "Tcp"
+  source_port_range           = "*"
+  destination_port_range      = "8443"
+  source_address_prefix       = var.web_subnet_prefix
+  destination_address_prefix  = var.app_subnet_prefix
+  resource_group_name         = azurerm_resource_group.main.name
+  network_security_group_name = azurerm_network_security_group.web.name
+}
+
+resource "azurerm_network_security_rule" "web_deny_all_outbound" {
+  name                        = "Deny-All-Outbound"
+  priority                    = 4096
+  direction                   = "Outbound"
+  access                      = "Deny"
+  protocol                    = "*"
+  source_port_range           = "*"
+  destination_port_range      = "*"
+  source_address_prefix       = "*"
+  destination_address_prefix  = "*"
+  resource_group_name         = azurerm_resource_group.main.name
+  network_security_group_name = azurerm_network_security_group.web.name
+}
