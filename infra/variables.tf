@@ -39,3 +39,9 @@ variable "app_subnet_prefix" {
   type        = string
   default     = "10.10.2.0/24"
 }
+
+variable "db_subnet_prefix" {
+  description = "Address prefix for the database subnet. Must match docs/ip-address-plan.md."
+  type        = string
+  default     = "10.10.3.0/24"
+}
