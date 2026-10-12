@@ -43,5 +43,5 @@ jobs:
           python3 -m venv /tmp/venv
           /tmp/venv/bin/pip install checkov==3.3.28
 
-      - name: Scan Terraform (report only for now)
-        run: /tmp/venv/bin/checkov -d infra --framework terraform --soft-fail
+      - name: Scan Terraform
+        run: /tmp/venv/bin/checkov -d infra --framework terraform
