@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   validate:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: infra
@@ -31,3 +31,17 @@ jobs:
 
       - name: Validate
         run: terraform validate
+
+  security-scan:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v7
+
+      - name: Install Checkov (pinned)
+        run: |
+          python3 -m venv /tmp/venv
+          /tmp/venv/bin/pip install checkov==3.3.28
+
+      - name: Scan Terraform (report only for now)
+        run: /tmp/venv/bin/checkov -d infra --framework terraform --soft-fail
