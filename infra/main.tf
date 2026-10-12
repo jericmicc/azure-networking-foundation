@@ -173,3 +173,23 @@ resource "azurerm_network_security_rule" "app_deny_all_outbound" {
   resource_group_name         = azurerm_resource_group.main.name
   network_security_group_name = azurerm_network_security_group.app.name
 }
+
+resource "azurerm_subnet" "db" {
+  name                            = "snet-db"
+  resource_group_name             = azurerm_resource_group.main.name
+  virtual_network_name            = azurerm_virtual_network.main.name
+  address_prefixes                = [var.db_subnet_prefix]
+  default_outbound_access_enabled = false
+}
+
+resource "azurerm_network_security_group" "db" {
+  name                = "nsg-db-${local.name_suffix}"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  tags                = local.tags
+}
+
+resource "azurerm_subnet_network_security_group_association" "db" {
+  subnet_id                 = azurerm_subnet.db.id
+  network_security_group_id = azurerm_network_security_group.db.id
+}
