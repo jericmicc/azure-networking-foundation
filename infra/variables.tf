@@ -33,3 +33,9 @@ variable "instance" {
   type        = string
   default     = "001"
 }
+
+variable "app_subnet_prefix" {
+  description = "Address prefix for the app subnet. Must match docs/ip-address-plan.md."
+  type        = string
+  default     = "10.10.2.0/24"
+}
