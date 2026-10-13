@@ -1,14 +1,14 @@
 # Traffic Matrix
 
-Status: planned. This is written before any app or database resources exist, so the code can be checked against it.
+Status: deployed. The rules exist in Azure but have not yet been tested with live traffic.
 
 ## Tiers
 
 | Tier | Subnet | CIDR | NSG | Status |
 |---|---|---|---|---|
 | Web | `snet-web` | `10.10.1.0/24` | `nsg-web-netfound-dev-southeastasia-001` | Deployed |
-| App | `snet-app` | `10.10.2.0/24` | planned | Planned |
-| Database | `snet-db` | `10.10.3.0/24` | planned | Planned |
+| App | `snet-app` | `10.10.2.0/24` | `nsg-app-netfound-dev-southeastasia-001` | Deployed |
+| Database | `snet-db` | `10.10.3.0/24` | `nsg-db-netfound-dev-southeastasia-001` | Deployed |
 
 ## Allowed flows
 

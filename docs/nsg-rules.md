@@ -15,8 +15,8 @@ Attached to `snet-web` (`10.10.1.0/24`).
 | In | 100 | `Allow-HTTPS-Inbound` | Allow | `Internet` | TCP 443 | Deployed and checked | The web tier serves HTTPS. Port 80 is deliberately not allowed |
 | In | 4000 | `Allow-AzureLoadBalancer-Inbound` | Allow | `AzureLoadBalancer` | Any | Deployed and checked | Keeps load balancer health probes working after the deny rule |
 | In | 4096 | `Deny-All-Inbound` | Deny | Any | Any | Deployed and checked | Replaces the built-in `AllowVnetInBound` (65000), which allows every port between subnets |
-| Out | 100 | `Allow-Web-To-App-Outbound` | Allow | `10.10.2.0/24` | TCP 8443 | In code, not yet deployed | The web tier may call the application tier |
-| Out | 4096 | `Deny-All-Outbound` | Deny | Any | Any | In code, not yet deployed | Overrides the built-in `AllowInternetOutBound` (65001) |
+| Out | 100 | `Allow-Web-To-App-Outbound` | Allow | `10.10.2.0/24` | TCP 8443 | Deployed and checked | The web tier may call the application tier |
+| Out | 4096 | `Deny-All-Outbound` | Deny | Any | Any | Deployed and checked | Overrides the built-in `AllowInternetOutBound` (65001) |
 
 ## App tier: `nsg-app-netfound-dev-southeastasia-001`
 
@@ -24,11 +24,11 @@ Attached to `snet-app` (`10.10.2.0/24`).
 
 | Dir | Priority | Name | Action | Peer | Port | Status | Why it exists |
 |---|---|---|---|---|---|---|---|
-| In | 100 | `Allow-Web-To-App-Inbound` | Allow | `10.10.1.0/24` | TCP 8443 | In code, not yet deployed | Only the web tier may call the application |
-| In | 4000 | `Allow-AzureLoadBalancer-Inbound` | Allow | `AzureLoadBalancer` | Any | In code, not yet deployed | Health probes, needed if a load balancer fronts this tier |
-| In | 4096 | `Deny-All-Inbound` | Deny | Any | Any | In code, not yet deployed | Closes the built-in allow-all between subnets |
-| Out | 100 | `Allow-App-To-DB-Outbound` | Allow | `10.10.3.0/24` | TCP 1433 | In code, not yet deployed | The application may only reach the database tier |
-| Out | 4096 | `Deny-All-Outbound` | Deny | Any | Any | In code, not yet deployed | A compromised application cannot send data out |
+| In | 100 | `Allow-Web-To-App-Inbound` | Allow | `10.10.1.0/24` | TCP 8443 | Deployed and checked | Only the web tier may call the application |
+| In | 4000 | `Allow-AzureLoadBalancer-Inbound` | Allow | `AzureLoadBalancer` | Any | Deployed and checked | Health probes, needed if a load balancer fronts this tier |
+| In | 4096 | `Deny-All-Inbound` | Deny | Any | Any | Deployed and checked | Closes the built-in allow-all between subnets |
+| Out | 100 | `Allow-App-To-DB-Outbound` | Allow | `10.10.3.0/24` | TCP 1433 | Deployed and checked | The application may only reach the database tier |
+| Out | 4096 | `Deny-All-Outbound` | Deny | Any | Any | Deployed and checked | A compromised application cannot send data out |
 
 ## Database tier: `nsg-db-netfound-dev-southeastasia-001`
 
@@ -36,9 +36,9 @@ Attached to `snet-db` (`10.10.3.0/24`).
 
 | Dir | Priority | Name | Action | Peer | Port | Status | Why it exists |
 |---|---|---|---|---|---|---|---|
-| In | 100 | `Allow-App-To-DB-Inbound` | Allow | `10.10.2.0/24` | TCP 1433 | In code, not yet deployed | Only the application tier may query the database |
-| In | 4096 | `Deny-All-Inbound` | Deny | Any | Any | In code, not yet deployed | Blocks the web tier and everything else |
-| Out | 4096 | `Deny-All-Outbound` | Deny | Any | Any | In code, not yet deployed | The database has no path out |
+| In | 100 | `Allow-App-To-DB-Inbound` | Allow | `10.10.2.0/24` | TCP 1433 | Deployed and checked | Only the application tier may query the database |
+| In | 4096 | `Deny-All-Inbound` | Deny | Any | Any | Deployed and checked | Blocks the web tier and everything else |
+| Out | 4096 | `Deny-All-Outbound` | Deny | Any | Any | Deployed and checked | The database has no path out |
 
 ## Design notes
 
