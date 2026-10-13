@@ -10,7 +10,7 @@ A reference implementation of a segmented Azure network, built with Terraform in
 |---|---|
 | Resource group, virtual network, tags, naming convention | Done |
 | Web subnet (no default outbound access) and web NSG with deny-by-default inbound | Done |
-| CI: format check, init, validate and a pinned Checkov security scan (blocking) on every push | Done |
+| CI: format check, init, validate and a pinned Checkov security scan (blocking) on every push and pull request, with a [documented failing test](docs/evidence/ci-negative-test.md) | Done |
 | App and database subnets with NSGs | Deployed (not yet tested with traffic) |
 | Routing and outbound design | Planned |
 | Private endpoint and private DNS | Planned |
