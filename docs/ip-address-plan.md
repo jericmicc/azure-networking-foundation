@@ -17,8 +17,8 @@
 | Subnet | CIDR | Usable IPs | Purpose | Status |
 |---|---|---|---|---|
 | `snet-web` | `10.10.1.0/24` | 251 | Internet-facing tier (load balancer, web servers) | Deployed |
-| `snet-app` | `10.10.2.0/24` | 251 | Application tier, no direct internet inbound | Planned |
-| `snet-db` | `10.10.3.0/24` | 251 | Data tier, reachable only from the app tier | Planned |
+| `snet-app` | `10.10.2.0/24` | 251 | Application tier, no direct internet inbound | Deployed |
+| `snet-db` | `10.10.3.0/24` | 251 | Data tier, reachable only from the app tier | Deployed |
 | `snet-pe` | `10.10.4.0/24` | 251 | Private endpoints | Reserved |
 | `AzureBastionSubnet` | `10.10.5.0/26` | 59 | Azure Bastion (name is mandatory, minimum size /26) | Reserved |
 

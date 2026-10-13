@@ -1,0 +1,25 @@
+NOTE: The Peer column shows the SOURCE address prefix of each rule. For outbound rules this is the tier's own subnet, not the destination. Destinations are in docs/nsg-rules.md.
+Captured with az network nsg rule list after the first full deployment (24 resources, since destroyed).
+
+== web
+Dir       Pri    Name                             Access    Peer               Port
+--------  -----  -------------------------------  --------  -----------------  ------
+Outbound  100    Allow-Web-To-App-Outbound        Allow     10.10.1.0/24       8443
+Inbound   100    Allow-HTTPS-Inbound              Allow     Internet           443
+Inbound   4000   Allow-AzureLoadBalancer-Inbound  Allow     AzureLoadBalancer  *
+Outbound  4096   Deny-All-Outbound                Deny      *                  *
+Inbound   4096   Deny-All-Inbound                 Deny      *                  *
+== app
+Dir       Pri    Name                             Access    Peer               Port
+--------  -----  -------------------------------  --------  -----------------  ------
+Inbound   100    Allow-Web-To-App-Inbound         Allow     10.10.1.0/24       8443
+Outbound  100    Allow-App-To-DB-Outbound         Allow     10.10.2.0/24       1433
+Inbound   4000   Allow-AzureLoadBalancer-Inbound  Allow     AzureLoadBalancer  *
+Outbound  4096   Deny-All-Outbound                Deny      *                  *
+Inbound   4096   Deny-All-Inbound                 Deny      *                  *
+== db
+Dir       Pri    Name                     Access    Peer          Port
+--------  -----  -----------------------  --------  ------------  ------
+Inbound   100    Allow-App-To-DB-Inbound  Allow     10.10.2.0/24  1433
+Inbound   4096   Deny-All-Inbound         Deny      *             *
+Outbound  4096   Deny-All-Outbound        Deny      *             *
