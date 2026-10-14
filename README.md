@@ -30,7 +30,7 @@ A reference implementation of a segmented Azure network, built with Terraform in
 - No credentials or subscription IDs in code: authentication uses the Azure CLI login
 - Pinned Terraform and provider versions, with the lock file committed
 - Names follow the Microsoft Cloud Adoption Framework pattern: type, workload, environment, region, instance
-- Plan before apply, destroy after every session
+- Plan before apply, destroy after every session. Changes to `main` go through pull requests with required CI checks (format, validate, Checkov)
 
 ## Run it yourself
 
