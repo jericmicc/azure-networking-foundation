@@ -10,7 +10,7 @@ A reference implementation of a segmented Azure network, built with Terraform in
 |---|---|
 | Resource group, virtual network, tags, naming convention | Done |
 | Web subnet (no default outbound access) and web NSG with deny-by-default inbound | Done |
-| CI: format check, init, validate, tflint with the Azure ruleset and a pinned Checkov security scan (blocking) on every push and pull request, with a [documented failing test](docs/evidence/ci-negative-test.md) | Done |
+| CI: format check, init, validate, tflint with the Azure ruleset and a pinned Checkov security scan (blocking) on every push and pull request, with documented failing tests ([Checkov](docs/evidence/ci-negative-test.md), [tflint](docs/evidence/tflint-negative-test.md)) | Done |
 | App and database subnets with NSGs | Deployed (not yet tested with traffic) |
 | Routing and outbound design | Planned |
 | Private endpoint and private DNS | Planned |
@@ -33,7 +33,7 @@ A reference implementation of a segmented Azure network, built with Terraform in
 - No credentials or subscription IDs in code: authentication uses the Azure CLI login
 - Pinned Terraform and provider versions, with the lock file committed
 - Names follow the Microsoft Cloud Adoption Framework pattern: type, workload, environment, region, instance
-- Plan before apply, destroy after every session. Changes to `main` go through pull requests with required CI checks (format, validate, Checkov)
+- Plan before apply, destroy after every session. Changes to `main` go through pull requests with required CI checks (format, validate, tflint, Checkov)
 
 ## Run it yourself
 
