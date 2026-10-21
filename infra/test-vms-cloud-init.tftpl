@@ -1,0 +1,77 @@
+#!/bin/bash
+# Live traffic test. Runs once at first boot as root (cloud-init user data).
+# Every result line goes to the serial console, so it can be read from outside with
+# "az vm boot-diagnostics get-boot-log". No network path into the VM is needed.
+
+TIER="${tier}"
+WEB="${web_ip}"
+APP="${app_ip}"
+DB="${db_ip}"
+OUT=/var/log/nettest.log
+
+say() { echo "NETTEST $TIER $*" | tee -a "$OUT" > /dev/ttyS0; }
+
+# Try to open a TCP connection. open = connected, filtered = timed out (dropped by an NSG),
+# refused = the packet arrived but nothing is listening.
+probe_once() {
+  timeout 4 bash -c "exec 3<>/dev/tcp/$1/$2" 2>/dev/null
+  case $? in
+    0) echo open ;;
+    124) echo filtered ;;
+    *) echo refused ;;
+  esac
+}
+
+# report EXPECTED LABEL PORT ACTUAL: open must connect, blocked must be filtered.
+report() {
+  local result=FAIL
+  if [ "$1" = "open" ] && [ "$4" = "open" ]; then result=PASS; fi
+  if [ "$1" = "blocked" ] && [ "$4" = "filtered" ]; then result=PASS; fi
+  say "to $2:$3 expected=$1 actual=$4 result=$result"
+}
+
+# expect_open LABEL HOST PORT: retry for up to 5 minutes, the other VM may still be booting.
+expect_open() {
+  local actual="" n=0
+  while [ $n -lt 30 ]; do
+    actual=$(probe_once "$2" "$3")
+    [ "$actual" = "open" ] && break
+    n=$((n + 1))
+    sleep 10
+  done
+  report open "$1" "$3" "$actual"
+}
+
+expect_blocked() { report blocked "$1" "$3" "$(probe_once "$2" "$3")"; }
+
+# Listener for this tier, serving an empty folder so nothing on the VM is exposed.
+case "$TIER" in
+  web) LPORT=443 ;;
+  app) LPORT=8443 ;;
+  db) LPORT=1433 ;;
+esac
+mkdir -p /srv/nettest
+systemd-run --unit=nettest-listener python3 -m http.server "$LPORT" --bind 0.0.0.0 --directory /srv/nettest > /dev/null 2>&1
+say "listener on port $LPORT started, waiting 120 seconds for the other VMs"
+sleep 120
+
+case "$TIER" in
+  web)
+    expect_open app-vm "$APP" 8443
+    expect_blocked app-vm-ssh "$APP" 22
+    expect_blocked db-vm "$DB" 1433
+    expect_blocked internet 1.1.1.1 443
+    ;;
+  app)
+    expect_open db-vm "$DB" 1433
+    expect_blocked db-vm-ssh "$DB" 22
+    expect_blocked web-vm "$WEB" 443
+    expect_blocked internet 1.1.1.1 443
+    ;;
+  db)
+    expect_blocked app-vm "$APP" 8443
+    expect_blocked web-vm "$WEB" 443
+    expect_blocked internet 1.1.1.1 443
+    ;;
+esac
+say "DONE"
