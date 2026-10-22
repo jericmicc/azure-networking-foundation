@@ -11,7 +11,7 @@ A reference implementation of a segmented Azure network, built with Terraform in
 | Resource group, virtual network, tags, naming convention | Done |
 | Web subnet (no default outbound access) and web NSG with deny-by-default inbound | Done |
 | CI: format check, init, validate, tflint with the Azure ruleset and a pinned Checkov security scan (blocking) on every push and pull request, with documented failing tests ([Checkov](docs/evidence/ci-negative-test.md), [tflint](docs/evidence/tflint-negative-test.md)) | Done |
-| App and database subnets with NSGs | Deployed (not yet tested with traffic) |
+| App and database subnets with NSGs, tested with live traffic on three small VMs ([evidence](docs/evidence/live-traffic-test.md)) | Done |
 | Routing and outbound design | Planned |
 | Private endpoint and private DNS | Planned |
 | Monitoring and VNet flow logs | Planned |
@@ -37,7 +37,7 @@ A reference implementation of a segmented Azure network, built with Terraform in
 
 ## Run it yourself
 
-Requires Terraform, the Azure CLI and an Azure subscription. The resources used so far are free. State is stored remotely: `infra/backend.tf` points at a storage account that belongs to the repo owner, so to run this yourself first create your own with `bootstrap/create-state-storage.sh` (change the names in it) and pass your names to `terraform init` with `-backend-config`. See [remote state](docs/remote-state.md).
+Requires Terraform, the Azure CLI and an Azure subscription. The network resources are free. The optional test VMs (`deploy_test_vms = true`, see the [live traffic test](docs/evidence/live-traffic-test.md)) are billed per hour, so destroy them the same day. State is stored remotely: `infra/backend.tf` points at a storage account that belongs to the repo owner, so to run this yourself first create your own with `bootstrap/create-state-storage.sh` (change the names in it) and pass your names to `terraform init` with `-backend-config`. See [remote state](docs/remote-state.md).
 
     az login
     export ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
@@ -50,7 +50,7 @@ Requires Terraform, the Azure CLI and an Azure subscription. The resources used 
 ## Known simplifications
 
 - Terraform state is remote (Azure Storage, Entra ID auth, versioned), but in a locally redundant, single-region account with a public endpoint protected by authentication only. It lives in a free-trial subscription. See [remote state](docs/remote-state.md).
-- The NSG rules have not yet been tested with live traffic.
+- The NSG rules were tested once with live traffic (TCP only, one run). See the [evidence](docs/evidence/live-traffic-test.md) for what the test does and does not prove.
 - A single flat VNet is a starting point, not an enterprise landing zone.
 - The web tier accepts HTTPS from the whole internet. A production design would put Application Gateway, Front Door or a firewall in front.
 - Ports 8443 (web to app) and 1433 (app to database) are placeholders for a reference implementation.
