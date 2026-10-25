@@ -77,6 +77,8 @@ resource "azurerm_linux_virtual_machine" "test" {
     web_ip = azurerm_network_interface.test["web"].private_ip_address
     app_ip = azurerm_network_interface.test["app"].private_ip_address
     db_ip  = azurerm_network_interface.test["db"].private_ip_address
+    nat    = var.deploy_nat_gateway
+    nat_ip = try(azurerm_public_ip.nat_app[0].ip_address, "none")
   }))
 
   admin_ssh_key {

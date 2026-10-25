@@ -5,6 +5,7 @@ Every tier follows the same pattern: allow only the flows in [traffic-matrix.md]
 Rule status:
 - **Deployed and checked**: deployed to Azure and listed with `az network nsg rule list` (see `docs/evidence/`).
 - **In code, not yet deployed**: present in Terraform and passing CI, but never deployed or tested with traffic.
+- **Tested live, optional**: created only when a switch such as `deploy_nat_gateway` is on. Deployed and tested with live traffic, see `docs/evidence/outbound-nat-test.md`.
 
 ## Web tier: `nsg-web-netfound-dev-southeastasia-001`
 
@@ -28,6 +29,7 @@ Attached to `snet-app` (`10.10.2.0/24`).
 | In | 4000 | `Allow-AzureLoadBalancer-Inbound` | Allow | `AzureLoadBalancer` | Any | Deployed and checked | Health probes, needed if a load balancer fronts this tier |
 | In | 4096 | `Deny-All-Inbound` | Deny | Any | Any | Deployed and checked | Closes the built-in allow-all between subnets |
 | Out | 100 | `Allow-App-To-DB-Outbound` | Allow | `10.10.3.0/24` | TCP 1433 | Deployed and checked | The application may only reach the database tier |
+| Out | 110 | `Allow-App-To-Internet-Outbound` | Allow | `Internet` | TCP 443 | Tested live, optional | Lets the application reach the internet through the NAT Gateway. Exists only when `deploy_nat_gateway` is on. Filters by port, not domain |
 | Out | 4096 | `Deny-All-Outbound` | Deny | Any | Any | Deployed and checked | A compromised application cannot send data out |
 
 ## Database tier: `nsg-db-netfound-dev-southeastasia-001`
@@ -53,7 +55,7 @@ Attached to `snet-db` (`10.10.3.0/24`).
 ## Known simplifications
 
 - Allowing the whole internet on 443 is acceptable for a reference implementation. Production designs usually put Application Gateway, Front Door or a firewall in front, and allow only that service as the source.
-- No outbound path to the internet exists. When a workload needs updates or monitoring, add narrow service tag allows and a NAT Gateway, and record the evidence.
-- Denying all outbound traffic may break Azure platform traffic once virtual machines exist (for example DNS and the VM agent, which use Azure's platform address 168.63.129.16). This is untested and will be checked at the first live test.
+- By default no outbound path to the internet exists. With `deploy_nat_gateway = true`, the app tier can reach the internet on TCP 443 through a NAT Gateway (rule `Allow-App-To-Internet-Outbound`). This filters by port, not by domain, so any host on port 443 is reachable. Domain filtering needs a firewall.
+- Denying all outbound traffic could break Azure platform traffic once virtual machines exist (for example DNS and the VM agent, which use Azure's platform address 168.63.129.16). The VM agent reported Ready on all three test VMs with the deny rules in place. DNS was not tested.
 - Ports 8443 and 1433 are placeholders.
-- None of the rules have been tested with live traffic.
+- The rules were tested with live traffic on 22 October 2026, and again with the outbound design on 25 October 2026 (see `docs/evidence/`). Each test was one full run, TCP only. UDP and ICMP were not tested.
