@@ -10,7 +10,7 @@ A reference implementation of a segmented Azure network, built with Terraform in
 |---|---|
 | Resource group, virtual network, tags, naming convention | Done |
 | Web subnet (no default outbound access) and web NSG with deny-by-default inbound | Done |
-| CI: format check, init, validate, tflint with the Azure ruleset and a pinned Checkov security scan (blocking) on every push and pull request, with documented failing tests ([Checkov](docs/evidence/ci-negative-test.md), [tflint](docs/evidence/tflint-negative-test.md)) | Done |
+| CI: format check, init, validate, tflint with the Azure ruleset and a pinned Checkov security scan (blocking, including the optional code behind the switches) on every push and pull request, with documented failing tests ([Checkov](docs/evidence/ci-negative-test.md), [tflint](docs/evidence/tflint-negative-test.md), [Checkov on switch-gated code](docs/evidence/checkov-switch-gated-negative-test.md)) | Done |
 | App and database subnets with NSGs, tested with live traffic on three small VMs ([evidence](docs/evidence/live-traffic-test.md)) | Done |
 | Routing and outbound design: optional NAT Gateway on the app tier and a route table on the database subnet, tested with live traffic ([evidence](docs/evidence/outbound-nat-test.md)) | Done |
 | Private endpoint and private DNS | Planned |
