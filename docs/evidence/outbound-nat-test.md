@@ -84,4 +84,6 @@ Effective routes reported by Azure:
 
 ## Cost
 
-Real figures: to be added from Azure Cost analysis once the billing data has updated. The NAT Gateway Standard list price is $0.045 per hour plus $0.045 per GB processed (Azure Retail Prices API). The full run lasted a little over one hour.
+Real cost from Azure Cost analysis for both NAT runs together (24 October, under 20 minutes, and 25 October, about 70 minutes, 38 resources each): **USD 0.55**. Cost analysis reported all of it under 25 October, so it cannot be split per run from these figures. By service: virtual machines 0.46 (three VMs, 0.15 each), NAT Gateway 0.07, storage 0.02 (the OS disks), virtual network 0.01 (the public IPs), bandwidth under 0.01. The state storage account cost under 0.01.
+
+The NAT Gateway figure of 0.07 matches about 1.5 hours at the list price of $0.045 per hour (Azure Retail Prices API), which fits both runs being included. The list price also has a $0.045 per GB processed part. The three VMs cost the same each and fit the same total running time.
