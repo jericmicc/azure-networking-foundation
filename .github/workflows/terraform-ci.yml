@@ -43,8 +43,8 @@ jobs:
           python3 -m venv /tmp/venv
           /tmp/venv/bin/pip install checkov==3.3.28
 
-      - name: Scan Terraform
-        run: /tmp/venv/bin/checkov -d infra --framework terraform
+      - name: Scan Terraform (optional code switched on)
+        run: /tmp/venv/bin/checkov -d infra --framework terraform --var-file infra/checkov.tfvars
 
   tflint:
     runs-on: ubuntu-24.04
