@@ -5,7 +5,7 @@ Every tier follows the same pattern: allow only the flows in [traffic-matrix.md]
 Rule status:
 - **Deployed and checked**: deployed to Azure and listed with `az network nsg rule list` (see `docs/evidence/`).
 - **In code, not yet deployed**: present in Terraform and passing CI, but never deployed or tested with traffic.
-- **Tested live, optional**: created only when a switch such as `deploy_nat_gateway` is on. Deployed and tested with live traffic, see `docs/evidence/outbound-nat-test.md`.
+- **Tested live, optional**: created only when a switch such as `deploy_nat_gateway` or `deploy_private_endpoint` is on. Deployed and tested with live traffic, see `docs/evidence/outbound-nat-test.md` and `docs/evidence/private-endpoint-test.md`.
 
 ## Web tier: `nsg-web-netfound-dev-southeastasia-001`
 
@@ -30,6 +30,7 @@ Attached to `snet-app` (`10.10.2.0/24`).
 | In | 4096 | `Deny-All-Inbound` | Deny | Any | Any | Deployed and checked | Closes the built-in allow-all between subnets |
 | Out | 100 | `Allow-App-To-DB-Outbound` | Allow | `10.10.3.0/24` | TCP 1433 | Deployed and checked | The application may only reach the database tier |
 | Out | 110 | `Allow-App-To-Internet-Outbound` | Allow | `Internet` | TCP 443 | Tested live, optional | Lets the application reach the internet through the NAT Gateway. Exists only when `deploy_nat_gateway` is on. Filters by port, not domain |
+| Out | 120 | `Allow-App-To-PE-Outbound` | Allow | `10.10.4.0/24` | TCP 443 | Tested live, optional | Lets the application reach the private endpoint. Exists only when `deploy_private_endpoint` is on |
 | Out | 4096 | `Deny-All-Outbound` | Deny | Any | Any | Deployed and checked | A compromised application cannot send data out |
 
 ## Database tier: `nsg-db-netfound-dev-southeastasia-001`
@@ -41,6 +42,16 @@ Attached to `snet-db` (`10.10.3.0/24`).
 | In | 100 | `Allow-App-To-DB-Inbound` | Allow | `10.10.2.0/24` | TCP 1433 | Deployed and checked | Only the application tier may query the database |
 | In | 4096 | `Deny-All-Inbound` | Deny | Any | Any | Deployed and checked | Blocks the web tier and everything else |
 | Out | 4096 | `Deny-All-Outbound` | Deny | Any | Any | Deployed and checked | The database has no path out |
+
+## Private endpoint tier: `nsg-pe-netfound-dev-southeastasia-001`
+
+Attached to `snet-pe` (`10.10.4.0/24`). Exists only when `deploy_private_endpoint` is on. Network policies are enabled on the subnet, so these rules apply to the private endpoint.
+
+| Dir | Priority | Name | Action | Peer | Port | Status | Why it exists |
+|---|---|---|---|---|---|---|---|
+| In | 100 | `Allow-App-To-PE-Inbound` | Allow | `10.10.2.0/24` | TCP 443 | Tested live, optional | Only the application tier may reach the private endpoint |
+| In | 4096 | `Deny-All-Inbound` | Deny | Any | Any | Tested live, optional | Blocks the web tier, the database tier and everything else |
+| Out | 4096 | `Deny-All-Outbound` | Deny | Any | Any | Tested live, optional | The endpoint subnet starts no connections |
 
 ## Design notes
 
@@ -56,6 +67,7 @@ Attached to `snet-db` (`10.10.3.0/24`).
 
 - Allowing the whole internet on 443 is acceptable for a reference implementation. Production designs usually put Application Gateway, Front Door or a firewall in front, and allow only that service as the source.
 - By default no outbound path to the internet exists. With `deploy_nat_gateway = true`, the app tier can reach the internet on TCP 443 through a NAT Gateway (rule `Allow-App-To-Internet-Outbound`). This filters by port, not by domain, so any host on port 443 is reachable. Domain filtering needs a firewall.
-- Denying all outbound traffic could break Azure platform traffic once virtual machines exist (for example DNS and the VM agent, which use Azure's platform address 168.63.129.16). The VM agent reported Ready on all three test VMs with the deny rules in place. DNS was not tested.
+- Denying all outbound traffic could break Azure platform traffic once virtual machines exist (for example DNS and the VM agent, which use Azure's platform address 168.63.129.16). The VM agent reported Ready on all three test VMs with the deny rules in place. In the private endpoint test the app VM also resolved the storage name to the private IP through Azure DNS, so name resolution works from the app tier. DNS from the web and database tiers was not tested.
 - Ports 8443 and 1433 are placeholders.
-- The rules were tested with live traffic on 22 October 2026, and again with the outbound design on 25 October 2026 (see `docs/evidence/`). Each test was one full run, TCP only. UDP and ICMP were not tested.
+- The private endpoint was tested against an empty test storage account, over TCP 443 only. Network policies are enabled on `snet-pe`, so the `nsg-pe` rules apply to the endpoint. Whether a real workload needs extra rules, for example for other storage sub-resources, was not tested.
+- The rules were tested with live traffic on 22 October 2026, with the outbound design on 25 October 2026, and with the private endpoint on 27 October 2026 (see `docs/evidence/`). Each test was one full run, TCP only. UDP and ICMP were not tested.

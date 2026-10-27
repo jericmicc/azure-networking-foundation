@@ -9,6 +9,9 @@ APP="${app_ip}"
 DB="${db_ip}"
 NAT="${nat}"
 NAT_IP="${nat_ip}"
+PE="${pe}"
+PE_IP="${pe_ip}"
+PE_DNS="${pe_dns}"
 OUT=/var/log/nettest.log
 
 say() { echo "NETTEST $TIER $*" | tee -a "$OUT" > /dev/ttyS0; }
@@ -54,6 +57,14 @@ check_source_ip() {
   say "source ip seen by the internet=$seen expected=$NAT_IP result=$result"
 }
 
+# Resolve the storage blob host name. Inside the VNet it must return the private endpoint address.
+check_private_dns() {
+  local seen result=FAIL
+  seen=$(getent hosts "$PE_DNS" | awk '{print $1}' | head -n 1)
+  if [ "$seen" = "$PE_IP" ]; then result=PASS; fi
+  say "dns name resolves to=$seen expected=$PE_IP result=$result"
+}
+
 # Listener for this tier, serving an empty folder so nothing on the VM is exposed.
 case "$TIER" in
   web) LPORT=443 ;;
@@ -71,6 +82,9 @@ case "$TIER" in
     expect_blocked app-vm-ssh "$APP" 22
     expect_blocked db-vm "$DB" 1433
     expect_blocked internet 1.1.1.1 443
+    if [ "$PE" = "true" ]; then
+      expect_blocked pe-blob "$PE_IP" 443
+    fi
     ;;
   app)
     expect_open db-vm "$DB" 1433
@@ -83,11 +97,18 @@ case "$TIER" in
     else
       expect_blocked internet 1.1.1.1 443
     fi
+    if [ "$PE" = "true" ]; then
+      check_private_dns
+      expect_open pe-blob "$PE_IP" 443
+    fi
     ;;
   db)
     expect_blocked app-vm "$APP" 8443
     expect_blocked web-vm "$WEB" 443
     expect_blocked internet 1.1.1.1 443
+    if [ "$PE" = "true" ]; then
+      expect_blocked pe-blob "$PE_IP" 443
+    fi
     ;;
 esac
 say "DONE"

@@ -1,6 +1,6 @@
 # Traffic Matrix
 
-Status: deployed and tested with live traffic on 22 and 25 October 2026 (TCP only, one full run each). See `docs/evidence/`.
+Status: deployed and tested with live traffic on 22, 25 and 27 October 2026 (TCP only, one full run each). See `docs/evidence/`.
 
 ## Tiers
 
@@ -9,6 +9,7 @@ Status: deployed and tested with live traffic on 22 and 25 October 2026 (TCP onl
 | Web | `snet-web` | `10.10.1.0/24` | `nsg-web-netfound-dev-southeastasia-001` | Deployed |
 | App | `snet-app` | `10.10.2.0/24` | `nsg-app-netfound-dev-southeastasia-001` | Deployed |
 | Database | `snet-db` | `10.10.3.0/24` | `nsg-db-netfound-dev-southeastasia-001` | Deployed |
+| Private endpoint | `snet-pe` | `10.10.4.0/24` | `nsg-pe-netfound-dev-southeastasia-001` | Tested live, optional |
 
 ## Allowed flows
 
@@ -22,6 +23,7 @@ Everything not listed here is denied.
 | 4 | Azure Load Balancer | Web and App | Any | Health probes. Required once a load balancer fronts a tier |
 | 5 | Azure Bastion | App and Database | TCP 22 and 3389 | Admin access, only when Bastion is added. Not part of the first build |
 | 6 | App | Internet | TCP 443 | Optional, only with `deploy_nat_gateway`. Updates and external APIs through the NAT Gateway. Filters by port, not by domain |
+| 7 | App | Private endpoint (blob storage) | TCP 443 | Optional, only with `deploy_private_endpoint`. The application reaches Azure Storage over a private IP, and the storage name resolves to that IP through a private DNS zone |
 
 ## Planned rules per NSG
 
@@ -39,16 +41,21 @@ Priorities are spaced out so rules can be inserted later. Custom rules can use 1
 | App | Inbound | 4096 | Deny | Any | Any |
 | App | Outbound | 100 | Allow | `10.10.3.0/24` | TCP 1433 |
 | App | Outbound | 110 | Allow | Internet (only with `deploy_nat_gateway`) | TCP 443 |
+| App | Outbound | 120 | Allow | `10.10.4.0/24` (only with `deploy_private_endpoint`) | TCP 443 |
 | App | Outbound | 4096 | Deny | Any | Any |
 | Database | Inbound | 100 | Allow | `10.10.2.0/24` | TCP 1433 |
 | Database | Inbound | 4096 | Deny | Any | Any |
 | Database | Outbound | 4096 | Deny | Any | Any |
+| Private endpoint | Inbound | 100 | Allow | `10.10.2.0/24` | TCP 443 |
+| Private endpoint | Inbound | 4096 | Deny | Any | Any |
+| Private endpoint | Outbound | 4096 | Deny | Any | Any |
 
 ## Design notes
 
 - The built-in rules at priority 65000 allow all traffic between subnets in both directions. Each tier therefore needs its own explicit deny at 4096, otherwise the web tier could reach the database directly.
 - All three tiers have an explicit deny-all outbound rule, so no tier can start a connection that is not listed in the allowed flows.
-- Denying all outbound traffic could break Azure platform traffic (agents, updates, monitoring). In the live tests the VM agent stayed Ready with the deny rules in place. DNS, updates and monitoring were not tested. Service tag allows will be added when a real workload is deployed.
+- Denying all outbound traffic could break Azure platform traffic (agents, updates, monitoring). In the live tests the VM agent stayed Ready with the deny rules in place, and in the private endpoint test the app VM resolved a name through Azure DNS. DNS from the web and database tiers, updates and monitoring were not tested. Service tag allows will be added when a real workload is deployed.
 - Ports are placeholders for a reference implementation.
 - A managed database such as Azure SQL would normally use a private endpoint in `snet-pe` instead of a subnet of its own. `snet-db` assumes a database running on virtual machines or a SQL managed instance.
 - The app tier's only way out is the NAT Gateway, and only when it is switched on, because every subnet has default outbound access disabled. The database subnet also has a route table whose default route has next hop `None`, so its traffic toward the internet is dropped even if an NSG rule were added by mistake. See `docs/evidence/outbound-nat-test.md`.
+- The private endpoint path (`deploy_private_endpoint`) puts a storage account's blob service on a private IP in `snet-pe`. Public network access on that account is off, and the name resolves to the private IP through a private DNS zone linked to the VNet. Only the app tier may reach it, on TCP 443. The web and database tiers were tested and are blocked. See `docs/evidence/private-endpoint-test.md`.
