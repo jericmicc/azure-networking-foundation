@@ -13,7 +13,7 @@ A reference implementation of a segmented Azure network, built with Terraform in
 | CI: format check, init, validate, tflint with the Azure ruleset and a pinned Checkov security scan (blocking, including the optional code behind the switches) on every push and pull request, with documented failing tests ([Checkov](docs/evidence/ci-negative-test.md), [tflint](docs/evidence/tflint-negative-test.md), [Checkov on switch-gated code](docs/evidence/checkov-switch-gated-negative-test.md)) | Done |
 | App and database subnets with NSGs, tested with live traffic on three small VMs ([evidence](docs/evidence/live-traffic-test.md)) | Done |
 | Routing and outbound design: optional NAT Gateway on the app tier and a route table on the database subnet, tested with live traffic ([evidence](docs/evidence/outbound-nat-test.md)) | Done |
-| Private endpoint and private DNS | Planned |
+| Private endpoint and private DNS: a storage account on a private IP with a linked private DNS zone, tested with live traffic ([evidence](docs/evidence/private-endpoint-test.md)) | Done |
 | Monitoring and VNet flow logs | Planned |
 | Branch protection on `main` (pull request and passing checks required) | Done |
 | Remote state in Azure Storage with Entra ID auth and versioning ([details](docs/remote-state.md)) | Done |
@@ -37,7 +37,7 @@ A reference implementation of a segmented Azure network, built with Terraform in
 
 ## Run it yourself
 
-Requires Terraform, the Azure CLI and an Azure subscription. The network resources are free. The optional test VMs (`deploy_test_vms = true`, see the [live traffic test](docs/evidence/live-traffic-test.md)) and the optional NAT Gateway (`deploy_nat_gateway = true`, see the [outbound test](docs/evidence/outbound-nat-test.md)) are billed per hour, so destroy them the same day. State is stored remotely: `infra/backend.tf` points at a storage account that belongs to the repo owner, so to run this yourself first create your own with `bootstrap/create-state-storage.sh` (change the names in it) and pass your names to `terraform init` with `-backend-config`. See [remote state](docs/remote-state.md).
+Requires Terraform, the Azure CLI and an Azure subscription. The network resources are free. The optional test VMs (`deploy_test_vms = true`, see the [live traffic test](docs/evidence/live-traffic-test.md)), the optional NAT Gateway (`deploy_nat_gateway = true`, see the [outbound test](docs/evidence/outbound-nat-test.md)) and the optional private endpoint (`deploy_private_endpoint = true`, see the [private endpoint test](docs/evidence/private-endpoint-test.md)) are billed per hour, so destroy them the same day. State is stored remotely: `infra/backend.tf` points at a storage account that belongs to the repo owner, so to run this yourself first create your own with `bootstrap/create-state-storage.sh` (change the names in it) and pass your names to `terraform init` with `-backend-config`. See [remote state](docs/remote-state.md).
 
     az login
     export ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
@@ -50,8 +50,10 @@ Requires Terraform, the Azure CLI and an Azure subscription. The network resourc
 ## Known simplifications
 
 - Terraform state is remote (Azure Storage, Entra ID auth, versioned), but in a locally redundant, single-region account with a public endpoint protected by authentication only. It lives in a free-trial subscription. See [remote state](docs/remote-state.md).
-- The NSG rules and the outbound design were each tested with live traffic in one full run (TCP only). See the evidence for what the tests do and do not prove: [NSG rules](docs/evidence/live-traffic-test.md) and [outbound design](docs/evidence/outbound-nat-test.md).
+- The NSG rules, the outbound design and the private endpoint were each tested with live traffic in one full run (TCP only). See the evidence for what the tests do and do not prove: [NSG rules](docs/evidence/live-traffic-test.md), [outbound design](docs/evidence/outbound-nat-test.md) and [private endpoint](docs/evidence/private-endpoint-test.md).
 - A single flat VNet is a starting point, not an enterprise landing zone.
 - The web tier accepts HTTPS from the whole internet. A production design would put Application Gateway, Front Door or a firewall in front.
 - Ports 8443 (web to app) and 1433 (app to database) are placeholders for a reference implementation.
 - By default there is no outbound path to the internet. An optional NAT Gateway on the app tier (`deploy_nat_gateway = true`) allows outbound TCP 443 only. It filters by port, not by domain, so any host on 443 is reachable. See the [evidence](docs/evidence/outbound-nat-test.md).
+- The private endpoint is tested with an empty storage account that has public access and shared keys turned off. Terraform cannot reach the data plane of such an account, so `infra/providers.tf` sets `data_plane_available = false` for every storage account in this configuration, and they are managed through the management API only. Three Checkov findings on the test account are skipped in the code, each with a written reason.
+- The private endpoint test checked DNS from the app VM only, and only TCP 443, in one full run. It did not test a real workload or any data access. See the [evidence](docs/evidence/private-endpoint-test.md).
