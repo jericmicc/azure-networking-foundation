@@ -69,6 +69,7 @@ flowchart LR
 - [NSG rules](docs/nsg-rules.md): every rule, its priority and why it exists, based on the [traffic matrix](docs/traffic-matrix.md)
 - [Evidence](docs/evidence/): command output captured before each teardown
 - [Remote state](docs/remote-state.md): why state lives in Azure Storage, the bootstrap script, settings, cost and limits
+- [Troubleshooting](docs/troubleshooting.md): problems met while building this, what was seen and what fixed them
 
 ## Design principles
 
