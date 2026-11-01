@@ -15,7 +15,7 @@ crash.*.log
 # to change depending on the environment.
 *.tfvars
 *.tfvars.json
-# Exception: the Checkov var file holds only two true/false switches and is committed on purpose.
+# Exception: the Checkov var file holds only true/false switches and is committed on purpose.
 !infra/checkov.tfvars
 
 # Ignore override files as they are usually used to override resources locally and so
