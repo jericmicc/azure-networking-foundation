@@ -41,7 +41,7 @@ jobs:
       - name: Install Checkov (pinned)
         run: |
           python3 -m venv /tmp/venv
-          /tmp/venv/bin/pip install checkov==3.3.28
+          /tmp/venv/bin/pip install checkov==3.3.30
 
       - name: Scan Terraform (optional code switched on)
         run: /tmp/venv/bin/checkov -d infra --framework terraform --var-file infra/checkov.tfvars
