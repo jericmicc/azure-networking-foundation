@@ -4,6 +4,49 @@
 
 A reference implementation of a segmented Azure network, built with Terraform in small, documented steps. **Work in progress.** Each piece is deployed, verified, documented and then destroyed to keep costs at zero. In the status table, **Deployed** means deployed and checked during a session, then destroyed afterwards, so nothing is running now.
 
+## Architecture
+
+Dashed boxes and lines are optional parts, each behind a `deploy_*` switch (see "Run it yourself"). The arrows show the application flows the NSGs allow, and everything else is denied. Every rule is in the [traffic matrix](docs/traffic-matrix.md).
+
+```mermaid
+flowchart LR
+    internet(["Internet"])
+    internet_out(["Internet"])
+
+    subgraph vnet["VNet 10.10.0.0/20"]
+        web["snet-web<br/>10.10.1.0/24<br/>NSG: deny by default"]
+        app["snet-app<br/>10.10.2.0/24<br/>NSG: deny by default"]
+        db["snet-db<br/>10.10.3.0/24<br/>NSG: deny by default<br/>route table: default route to None"]
+        pe["snet-pe<br/>10.10.4.0/24<br/>NSG: deny by default<br/>private endpoint"]
+    end
+
+    nat["NAT Gateway"]
+    storage["Storage account<br/>public access off"]
+    dns["Private DNS zone<br/>privatelink.blob.core.windows.net"]
+
+    internet -->|"TCP 443"| web
+    web -->|"TCP 8443"| app
+    app -->|"TCP 1433"| db
+    app -.->|"TCP 443"| nat
+    nat -.-> internet_out
+    app -.->|"TCP 443"| pe
+    pe -.-> storage
+    dns -.->|"name resolves to the private IP"| pe
+
+    classDef optional stroke-dasharray: 5 5
+    class pe,nat,storage,dns,internet_out optional
+```
+
+Monitoring (`deploy_monitoring`) is collected by the Azure platform, not by an agent inside a VM:
+
+```mermaid
+flowchart LR
+    vnet["VNet"] -.->|"VNet flow log"| flowstore["Storage account<br/>locked down"]
+    nsgs["NSGs of all tiers"] -.->|"NSG event and rule counter logs"| workspace["Log Analytics workspace"]
+    classDef optional stroke-dasharray: 5 5
+    class flowstore,workspace optional
+```
+
 ## Status
 
 | Area | State |
