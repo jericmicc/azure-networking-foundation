@@ -28,9 +28,9 @@ locals {
   test_vm_tiers = var.deploy_test_vms ? toset(["web", "app", "db"]) : toset([])
 
   tier_subnet_ids = {
-    web = azurerm_subnet.web.id
-    app = azurerm_subnet.app.id
-    db  = azurerm_subnet.db.id
+    web = module.web.subnet_id
+    app = module.app.subnet_id
+    db  = module.db.subnet_id
   }
 }
 

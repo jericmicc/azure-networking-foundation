@@ -61,7 +61,8 @@ flowchart LR
 | Branch protection on `main` (pull request and passing checks required) | Done |
 | Remote state in Azure Storage with Entra ID auth and versioning ([details](docs/remote-state.md)) | Done |
 | Terraform plan on pull requests | Planned |
-| Terraform modules and hub-and-spoke topology | Planned |
+| Terraform module for the three tiers (`infra/modules/tier`: one definition of subnet, NSG and rules, used for web, app and db), checked to give an identical plan | Done |
+| Modules for the optional parts and hub-and-spoke topology | Planned |
 
 ## Documentation
 
@@ -102,3 +103,4 @@ Requires Terraform, the Azure CLI and an Azure subscription. The network resourc
 - The private endpoint is tested with an empty storage account that has public access and shared keys turned off. Terraform cannot reach the data plane of such an account, so `infra/providers.tf` sets `data_plane_available = false` for every storage account in this configuration, and they are managed through the management API only. Three Checkov findings on the test account are skipped in the code, each with a written reason.
 - The private endpoint test checked DNS from the app VM only, and only TCP 443, in one full run. It did not test a real workload or any data access. See the [evidence](docs/evidence/private-endpoint-test.md).
 - Monitoring uses a VNet flow log written to a storage account and NSG logs sent to a Log Analytics workspace. Traffic Analytics is not used, because it is billed per GB. The flow log storage account keeps public network access enabled behind a firewall that denies by default and allows trusted Azure services, which is the design that was tested. Disabling public network access completely was not tested. Reading the blobs from a laptop needs an optional IP rule (`TF_VAR_flow_log_reader_ip`), which is never committed. Five Checkov findings on that account are skipped in the code, each with a written reason. See the [evidence](docs/evidence/monitoring-test.md).
+- Only the three tiers are a module (`infra/modules/tier`). The optional parts (NAT Gateway, private endpoint, monitoring, test VMs) are still flat files in `infra/`. The plan counts matched before and after the refactor for nine switch combinations, and the plan with every switch on was compared setting by setting and was identical. CI runs `tflint` on `infra` only, so it does not lint the module (a local `tflint --recursive` is clean).

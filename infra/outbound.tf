@@ -35,7 +35,7 @@ resource "azurerm_nat_gateway_public_ip_association" "app" {
 
 resource "azurerm_subnet_nat_gateway_association" "app" {
   count          = var.deploy_nat_gateway ? 1 : 0
-  subnet_id      = azurerm_subnet.app.id
+  subnet_id      = module.app.subnet_id
   nat_gateway_id = azurerm_nat_gateway.app[0].id
 }
 
@@ -51,7 +51,7 @@ resource "azurerm_network_security_rule" "app_allow_internet_outbound" {
   source_address_prefix       = var.app_subnet_prefix
   destination_address_prefix  = "Internet"
   resource_group_name         = azurerm_resource_group.main.name
-  network_security_group_name = azurerm_network_security_group.app.name
+  network_security_group_name = module.app.nsg_name
 }
 
 resource "azurerm_route_table" "db" {
@@ -69,7 +69,7 @@ resource "azurerm_route_table" "db" {
 }
 
 resource "azurerm_subnet_route_table_association" "db" {
-  subnet_id      = azurerm_subnet.db.id
+  subnet_id      = module.db.subnet_id
   route_table_id = azurerm_route_table.db.id
 }
 
