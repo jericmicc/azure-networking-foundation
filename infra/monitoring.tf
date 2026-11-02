@@ -94,9 +94,9 @@ resource "azurerm_log_analytics_workspace" "main" {
 # The keys come from the switches alone, because resource IDs are not known until apply.
 locals {
   nsg_log_ids = {
-    web = azurerm_network_security_group.web.id
-    app = azurerm_network_security_group.app.id
-    db  = azurerm_network_security_group.db.id
+    web = module.web.nsg_id
+    app = module.app.nsg_id
+    db  = module.db.nsg_id
     pe  = one(azurerm_network_security_group.pe[*].id)
   }
   nsg_log_keys = concat(["web", "app", "db"], var.deploy_private_endpoint ? ["pe"] : [])

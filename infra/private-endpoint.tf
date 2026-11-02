@@ -94,7 +94,7 @@ resource "azurerm_network_security_rule" "app_allow_pe_outbound" {
   source_address_prefix       = var.app_subnet_prefix
   destination_address_prefix  = var.pe_subnet_prefix
   resource_group_name         = azurerm_resource_group.main.name
-  network_security_group_name = azurerm_network_security_group.app.name
+  network_security_group_name = module.app.nsg_name
 }
 
 resource "azurerm_storage_account" "pe_test" {
