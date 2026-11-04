@@ -117,3 +117,21 @@ Problems met while building this project, with what was seen and what fixed it. 
 - Push rejected with GH007: GitHub email privacy is on. Set your GitHub noreply address as the Git email, run `git commit --amend --reset-author --no-edit`, and push again.
 - A pager that freezes the terminal: press `q`, or use `git --no-pager`.
 - `git pull` printing "Already up to date" and `git branch -d` warning "not yet merged" mean the pull request was not merged yet. Merge it first, then run `git switch main`, `git pull`, `git branch -d BRANCH`, `git fetch --prune`.
+
+## Azure login from GitHub Actions (OIDC)
+
+### AADSTS700213: no matching federated identity record
+
+- Seen: `terraform init` in the `plan` job failed with "No matching federated identity record found for presented assertion subject", and the message printed the subject GitHub had sent.
+- Cause: GitHub now puts the numeric owner and repository IDs into the OIDC subject (`repo:OWNER@ID/REPO@ID:pull_request`). The federated credential had the plain `repo:OWNER/REPO:pull_request`. The subject must match exactly, with no wildcards.
+- Fix: copy the subject from the error message into the credential with `az ad app federated-credential update`, then re-run the job. Do not guess the subject: the error shows it.
+- To see the credentials of an app: `az ad app federated-credential list --id APP_ID --query "[].subject" -o tsv`.
+
+### az role assignment create prints nothing with --query roleDefinitionName
+
+- Seen: the command succeeded but a `--query` on `roleDefinitionName` printed an empty table, because the output of `create` does not have that field.
+- Fix: check the result in the portal (Access control (IAM) of the scope) or query a field that exists, such as `principalType`.
+
+### Keep errors out of public logs
+
+- Authorization errors from Azure can contain the subscription path. In a public repository, send the error text of a command that is expected to fail to a file and print only a short message or the matched phrase.
