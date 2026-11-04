@@ -99,3 +99,37 @@ jobs:
 
       - name: Plan (no lock, read-only)
         run: terraform plan -lock=false -input=false -no-color
+
+  oidc-negative-test:
+    # THROWAWAY: proves the pull request identity cannot write. Never merge this job.
+    # It passes only if both write attempts are refused with an authorization error.
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Log in to Azure (OIDC, no stored secret)
+        uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Control, count blobs in the state container (expected to work)
+        run: az storage blob list --account-name sttfstatenetfound001 --container-name tfstate --auth-mode login --query "length(@)" -o tsv
+
+      - name: Write a blob into the state container (expected REFUSED)
+        run: |
+          echo "negative test" > /tmp/neg.txt
+          if az storage blob upload --account-name sttfstatenetfound001 --container-name tfstate --name oidc-negative-test.txt --file /tmp/neg.txt --auth-mode login >/tmp/out.txt 2>/tmp/err.txt; then
+            echo "FAIL: the write was accepted"; exit 1
+          fi
+          if grep -qE 'AuthorizationPermissionMismatch|AuthorizationFailure|not authorized' /tmp/err.txt; then echo "REFUSED as expected (authorization error)"; else echo "FAIL: refused for another reason"; exit 1; fi
+
+      - name: Create a resource group (expected REFUSED)
+        run: |
+          if az group create --name rg-oidc-negative-test --location southeastasia >/tmp/out.txt 2>/tmp/err.txt; then
+            echo "FAIL: the group was created"; exit 1
+          fi
+          if grep -qE 'AuthorizationFailed|does not have authorization' /tmp/err.txt; then echo "REFUSED as expected (authorization error)"; else echo "FAIL: refused for another reason"; exit 1; fi
