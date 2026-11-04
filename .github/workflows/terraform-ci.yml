@@ -125,7 +125,7 @@ jobs:
           if az storage blob upload --account-name sttfstatenetfound001 --container-name tfstate --name oidc-negative-test.txt --file /tmp/neg.txt --auth-mode login >/tmp/out.txt 2>/tmp/err.txt; then
             echo "FAIL: the write was accepted"; exit 1
           fi
-          if grep -qE 'AuthorizationPermissionMismatch|AuthorizationFailure|not authorized' /tmp/err.txt; then echo "REFUSED as expected (authorization error)"; else echo "FAIL: refused for another reason"; exit 1; fi
+          m=$(grep -oE 'AuthorizationPermissionMismatch|AuthorizationFailure|not authorized|required permissions' /tmp/err.txt | head -n 1); if [ -n "$m" ]; then echo "REFUSED as expected, matched: $m"; else echo "FAIL: refused for another reason"; head -c 300 /tmp/err.txt; exit 1; fi
 
       - name: Create a resource group (expected REFUSED)
         run: |
