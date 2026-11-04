@@ -2,7 +2,7 @@
 # Off by default (deploy_test_vms = false) so a normal apply or CI run creates nothing billed.
 
 variable "deploy_test_vms" {
-  description = "Create the three test VMs and the web public IP. Billed. Destroy the same day."
+  description = "Create the three test VMs and the web public IP (five VMs with deploy_hub_spoke on). Billed. Destroy the same day."
   type        = bool
   default     = false
 }
@@ -25,12 +25,15 @@ variable "test_vm_ssh_public_key" {
 }
 
 locals {
-  test_vm_tiers = var.deploy_test_vms ? toset(["web", "app", "db"]) : toset([])
+  # With deploy_hub_spoke on, two more VMs are added: one in the hub shared subnet and one in the spoke 2 workload subnet.
+  test_vm_tiers = var.deploy_test_vms ? toset(concat(["web", "app", "db"], var.deploy_hub_spoke ? ["hub", "spoke2"] : [])) : toset([])
 
   tier_subnet_ids = {
-    web = module.web.subnet_id
-    app = module.app.subnet_id
-    db  = module.db.subnet_id
+    web    = module.web.subnet_id
+    app    = module.app.subnet_id
+    db     = module.db.subnet_id
+    hub    = try(module.hub_shared[0].subnet_id, "none")
+    spoke2 = try(module.spoke2_workload[0].subnet_id, "none")
   }
 }
 
@@ -77,6 +80,7 @@ resource "azurerm_linux_virtual_machine" "test" {
     web_ip = azurerm_network_interface.test["web"].private_ip_address
     app_ip = azurerm_network_interface.test["app"].private_ip_address
     db_ip  = azurerm_network_interface.test["db"].private_ip_address
+    hub_ip = try(azurerm_network_interface.test["hub"].private_ip_address, "none")
     nat    = var.deploy_nat_gateway
     nat_ip = try(azurerm_public_ip.nat_app[0].ip_address, "none")
     pe     = var.deploy_private_endpoint

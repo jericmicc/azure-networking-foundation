@@ -7,6 +7,7 @@ TIER="${tier}"
 WEB="${web_ip}"
 APP="${app_ip}"
 DB="${db_ip}"
+HUB="${hub_ip}"
 NAT="${nat}"
 NAT_IP="${nat_ip}"
 PE="${pe}"
@@ -70,6 +71,8 @@ case "$TIER" in
   web) LPORT=443 ;;
   app) LPORT=8443 ;;
   db) LPORT=1433 ;;
+  hub) LPORT=443 ;;
+  spoke2) LPORT=8080 ;;
 esac
 mkdir -p /srv/nettest
 systemd-run --unit=nettest-listener python3 -m http.server "$LPORT" --bind 0.0.0.0 --directory /srv/nettest > /dev/null 2>&1
@@ -109,6 +112,18 @@ case "$TIER" in
     if [ "$PE" = "true" ]; then
       expect_blocked pe-blob "$PE_IP" 443
     fi
+    ;;
+  hub)
+    expect_open app-vm-over-peering "$APP" 8443
+    expect_blocked app-vm-ssh "$APP" 22
+    expect_blocked db-vm "$DB" 1433
+    expect_blocked internet 1.1.1.1 443
+    ;;
+  spoke2)
+    expect_open hub-shared-vm "$HUB" 443
+    expect_blocked hub-shared-vm-ssh "$HUB" 22
+    expect_blocked app-vm "$APP" 8443
+    expect_blocked internet 1.1.1.1 443
     ;;
 esac
 say "DONE"
