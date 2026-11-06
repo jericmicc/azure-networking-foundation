@@ -1,6 +1,8 @@
 # Hub-and-spoke, behind a switch.
 # The existing VNet (vnet-netfound-...) is spoke 1. A new hub VNet holds a shared subnet, and a second spoke VNet holds a workload subnet.
 # Each spoke is peered with the hub only. Peering is not transitive, so the two spokes have no path to each other.
+# Spoke 2 sits in a second region (spoke2_location), so its peering with the hub is a global VNet peering. The reason is the
+# Total Regional vCPUs quota of 4 per region on this subscription: the test VMs do not all fit into one region.
 # Off by default (deploy_hub_spoke = false). VNets, subnets, NSGs and peerings cost nothing to hold. Only data that crosses a peering is billed.
 
 variable "deploy_hub_spoke" {
@@ -19,6 +21,17 @@ variable "hub_shared_subnet_prefix" {
   description = "Address prefix of the shared services subnet in the hub. Must match docs/ip-address-plan.md."
   type        = string
   default     = "10.20.0.0/24"
+}
+
+variable "spoke2_location" {
+  description = "Azure region of the second spoke. It must offer Standard_DC1ds_v3 to this subscription (checked: japaneast, australiaeast, centralindia)."
+  type        = string
+  default     = "japaneast"
+}
+
+locals {
+  # The naming convention puts the region in every name, so spoke 2 resources use its own region.
+  spoke2_name_suffix = "${var.workload}-${var.environment}-${var.spoke2_location}-${var.instance}"
 }
 
 variable "spoke2_vnet_address_space" {
@@ -44,8 +57,8 @@ resource "azurerm_virtual_network" "hub" {
 
 resource "azurerm_virtual_network" "spoke2" {
   count               = var.deploy_hub_spoke ? 1 : 0
-  name                = "vnet-spoke2-${local.name_suffix}"
-  location            = azurerm_resource_group.main.location
+  name                = "vnet-spoke2-${local.spoke2_name_suffix}"
+  location            = var.spoke2_location
   resource_group_name = azurerm_resource_group.main.name
   address_space       = var.spoke2_vnet_address_space
   tags                = local.tags
@@ -100,8 +113,8 @@ module "spoke2_workload" {
   count                = var.deploy_hub_spoke ? 1 : 0
   source               = "./modules/tier"
   name                 = "spoke2-workload"
-  name_suffix          = local.name_suffix
-  location             = azurerm_resource_group.main.location
+  name_suffix          = local.spoke2_name_suffix
+  location             = var.spoke2_location
   resource_group_name  = azurerm_resource_group.main.name
   virtual_network_name = azurerm_virtual_network.spoke2[0].name
   address_prefix       = var.spoke2_workload_subnet_prefix
