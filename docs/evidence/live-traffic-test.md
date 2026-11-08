@@ -60,6 +60,6 @@ From the Internet to the web VM public IP (`<web public IP>`):
 
 ## Cost
 
-Read from Azure Cost analysis on 23 October 2026, filtered to the project resource group (usage of 22 October, about one hour of runtime): $0.34 in total. Virtual Machines $0.32 (about $0.11 per VM), Virtual Network under $0.01, Storage under $0.01 and Bandwidth under $0.01. So the three OS disks and the public IP together cost under three cents.
+Billed: three small virtual machines with their OS disks, one public IP and a little network traffic, for about one hour of runtime on 22 October 2026. The network resources themselves (virtual network, subnets, NSGs) are free.
 
-The estimate made before the test (three VMs at about $0.141 per hour for about one hour, about $0.46) was roughly a third too high. The reason was not investigated: either the price used differs from what this subscription is charged, or the VMs ran for less time than assumed.
+Prices depend on the region, the VM size, how long things run and the pricing of your subscription, so this file does not quote any. Read your own figures in Azure Cost analysis (Cost Management) after a run: the data can lag by hours, and its dates are in UTC.
