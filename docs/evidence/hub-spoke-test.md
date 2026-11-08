@@ -101,4 +101,6 @@ Everything was destroyed afterwards. `az group exists` for the project resource 
 
 ## Cost
 
-Not read yet: Cost analysis lags by hours. The figure will be added before this evidence is merged.
+No figure was read. Azure Cost analysis showed nothing for this test at 15:32 on 8 November 2026: the subscription total was USD 1.91 and November was USD 0.00, and the chart had no entry for 8 November. Azure cost data lags by hours and sometimes by a day.
+
+The five small VMs were created at 14:11 (Asia/Manila) and destroyed the same afternoon, so they ran for about an hour or less. The cost is expected to be small, but this file does not state a number it did not read. The free credit of the subscription expires about 9 November, so the figure may not be readable afterwards. If it is, a later pull request will add it.
