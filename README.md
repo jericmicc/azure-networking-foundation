@@ -2,7 +2,7 @@
 
 [![terraform-ci](https://github.com/jericmicc/azure-networking-foundation/actions/workflows/terraform-ci.yml/badge.svg)](https://github.com/jericmicc/azure-networking-foundation/actions/workflows/terraform-ci.yml)
 
-A reference implementation of a segmented Azure network, built with Terraform in small, documented steps. **Work in progress.** Each piece is deployed, verified, documented and then destroyed to keep costs at zero. In the status table, **Deployed** means deployed and checked during a session, then destroyed afterwards, so nothing is running now.
+A reference implementation of a segmented Azure network, built with Terraform in small, documented steps. **Work in progress.** Each piece is deployed, verified, documented and then destroyed to keep costs low. In the status table, **Deployed** means deployed and checked during a session, then destroyed afterwards, so nothing is running now.
 
 ## Architecture
 
@@ -83,7 +83,7 @@ flowchart LR
 
 ## Run it yourself
 
-Requires Terraform, the Azure CLI and an Azure subscription. The network resources are free. The optional test VMs (`deploy_test_vms = true`, see the [live traffic test](docs/evidence/live-traffic-test.md)), the optional NAT Gateway (`deploy_nat_gateway = true`, see the [outbound test](docs/evidence/outbound-nat-test.md)) and the optional private endpoint (`deploy_private_endpoint = true`, see the [private endpoint test](docs/evidence/private-endpoint-test.md)) are billed per hour, so destroy them the same day. The optional monitoring (`deploy_monitoring = true`, see the [monitoring test](docs/evidence/monitoring-test.md)) is billed by the amount of data it collects, so destroy it the same day too. State is stored remotely: `infra/backend.tf` points at a storage account that belongs to the repo owner, so to run this yourself first create your own with `bootstrap/create-state-storage.sh` (change the names in it) and pass your names to `terraform init` with `-backend-config`. See [remote state](docs/remote-state.md).
+Requires Terraform, the Azure CLI and an Azure subscription. The network resources are free. The optional test VMs (`deploy_test_vms = true`, see the [live traffic test](docs/evidence/live-traffic-test.md)), the optional NAT Gateway (`deploy_nat_gateway = true`, see the [outbound test](docs/evidence/outbound-nat-test.md)) and the optional private endpoint (`deploy_private_endpoint = true`, see the [private endpoint test](docs/evidence/private-endpoint-test.md)) are billed per hour, so destroy them the same day. The optional monitoring (`deploy_monitoring = true`, see the [monitoring test](docs/evidence/monitoring-test.md)) is billed by the amount of data it collects, so destroy it the same day too. This repository does not quote prices: they depend on the region, the size and your subscription, so read your own figures in Azure Cost analysis. State is stored remotely: `infra/backend.tf` points at a storage account that belongs to the repo owner, so to run this yourself first create your own with `bootstrap/create-state-storage.sh` (change the names in it) and pass your names to `terraform init` with `-backend-config`. See [remote state](docs/remote-state.md).
 
     az login
     export ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
