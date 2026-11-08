@@ -10,6 +10,8 @@ Status: deployed and tested with live traffic on 22, 25 and 27 October 2026 (TCP
 | App | `snet-app` | `10.10.2.0/24` | `nsg-app-netfound-dev-southeastasia-001` | Deployed |
 | Database | `snet-db` | `10.10.3.0/24` | `nsg-db-netfound-dev-southeastasia-001` | Deployed |
 | Private endpoint | `snet-pe` | `10.10.4.0/24` | `nsg-pe-netfound-dev-southeastasia-001` | Tested live, optional |
+| Hub shared | `snet-hub-shared` | `10.20.0.0/24` | `nsg-hub-shared-netfound-dev-southeastasia-001` | Tested live, optional (`deploy_hub_spoke`) |
+| Spoke 2 workload | `snet-spoke2-workload` | `10.30.1.0/24` | `nsg-spoke2-workload-netfound-dev-japaneast-001` | Tested live, optional (`deploy_hub_spoke`) |
 
 ## Allowed flows
 
@@ -24,6 +26,8 @@ Everything not listed here is denied.
 | 5 | Azure Bastion | App and Database | TCP 22 and 3389 | Admin access, only when Bastion is added. Not part of the first build |
 | 6 | App | Internet | TCP 443 | Optional, only with `deploy_nat_gateway`. Updates and external APIs through the NAT Gateway. Filters by port, not by domain |
 | 7 | App | Private endpoint (blob storage) | TCP 443 | Optional, only with `deploy_private_endpoint`. The application reaches Azure Storage over a private IP, and the storage name resolves to that IP through a private DNS zone |
+| 8 | Hub shared | App (spoke 1) | TCP 8443 | Optional, only with `deploy_hub_spoke`. Shared services in the hub may call the application tier over VNet peering |
+| 9 | Spoke 2 workload | Hub shared | TCP 443 | Optional, only with `deploy_hub_spoke`. A workload in another region reaches shared services over global VNet peering |
 
 ## Planned rules per NSG
 
@@ -43,6 +47,7 @@ Priorities are spaced out so rules can be inserted later. Custom rules can use 1
 | App | Outbound | 110 | Allow | Internet (only with `deploy_nat_gateway`) | TCP 443 |
 | App | Outbound | 120 | Allow | `10.10.4.0/24` (only with `deploy_private_endpoint`) | TCP 443 |
 | App | Outbound | 4096 | Deny | Any | Any |
+| App | Inbound | 110 | Allow | `10.20.0.0/24` (only with `deploy_hub_spoke`) | TCP 8443 |
 | Database | Inbound | 100 | Allow | `10.10.2.0/24` | TCP 1433 |
 | Database | Inbound | 4096 | Deny | Any | Any |
 | Database | Outbound | 4096 | Deny | Any | Any |
@@ -59,3 +64,5 @@ Priorities are spaced out so rules can be inserted later. Custom rules can use 1
 - A managed database such as Azure SQL would normally use a private endpoint in `snet-pe` instead of a subnet of its own. `snet-db` assumes a database running on virtual machines or a SQL managed instance.
 - The app tier's only way out is the NAT Gateway, and only when it is switched on, because every subnet has default outbound access disabled. The database subnet also has a route table whose default route has next hop `None`, so its traffic toward the internet is dropped even if an NSG rule were added by mistake. See `docs/evidence/outbound-nat-test.md`.
 - The private endpoint path (`deploy_private_endpoint`) puts a storage account's blob service on a private IP in `snet-pe`. Public network access on that account is off, and the name resolves to the private IP through a private DNS zone linked to the VNet. Only the app tier may reach it, on TCP 443. The web and database tiers were tested and are blocked. See `docs/evidence/private-endpoint-test.md`.
+- Hub and spoke (optional, `deploy_hub_spoke`): the hub (`10.20.0.0/22`, southeastasia), spoke 1 (the existing VNet) and spoke 2 (`10.30.0.0/20`, japaneast) are joined by four peering resources, two per spoke. VNet peering is not transitive, so spoke 1 and spoke 2 cannot reach each other. The effective route table of the spoke 2 network card has a route to the hub (next hop `VNetGlobalPeering`) and none to `10.10.0.0/20`. See `docs/evidence/hub-spoke-test.md`.
+- The hub shared subnet has deny-all inbound and outbound rules like every other tier. Its only allowed inbound flow is TCP 443 from the spoke 2 workload subnet, and its only allowed outbound flow is TCP 8443 to the app subnet.
