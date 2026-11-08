@@ -101,6 +101,6 @@ Everything was destroyed afterwards. `az group exists` for the project resource 
 
 ## Cost
 
-No figure was read. Azure Cost analysis showed nothing for this test at 15:32 on 8 November 2026: the subscription total was USD 1.91 and November was USD 0.00, and the chart had no entry for 8 November. Azure cost data lags by hours and sometimes by a day.
+Billed: five small virtual machines with their OS disks, for about an hour or less on 8 November 2026. VNet peering is billed by the amount of data transferred (global peering between regions at a higher rate than peering inside a region), and the test sent very little data. The virtual networks, subnets and NSGs are free.
 
-The five small VMs were created at 14:11 (Asia/Manila) and destroyed the same afternoon, so they ran for about an hour or less. The cost is expected to be small, but this file does not state a number it did not read. The free credit of the subscription expires about 9 November, so the figure may not be readable afterwards. If it is, a later pull request will add it.
+No figure was read: Azure Cost analysis had not shown this test yet when the resources were destroyed. Prices depend on the region, the VM size, how long things run and the pricing of your subscription, so this file does not quote any. Read your own figures in Azure Cost analysis (Cost Management) after a run: the data can lag by hours, and its dates are in UTC.

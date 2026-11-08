@@ -98,6 +98,6 @@ Deployed settings read with the Azure CLI:
 
 ## Cost
 
-Real cost from Azure Cost analysis has not been read yet. It lags by up to a day and its dates are in UTC. It will be added in a follow-up change. The private endpoint existed for about 1.5 hours and the three VMs for about 1 hour.
+Billed: a private endpoint (per hour, and per GB of data processed), a private DNS zone, an empty storage account and the three test VMs. The private endpoint existed for about 1.5 hours and the VMs for about 1 hour. Private endpoints and private DNS zones have several price meters, and which ones applied was not checked here.
 
-List prices (Azure Retail Prices API): a standard private endpoint is $0.01 per hour, plus $0.01 per GB of data processed in each direction. A private DNS zone is listed at $0.50, and I did not verify the unit (probably per month). The API also lists a meter named "Fixed Private Endpoint T1" at $14.00 per hour, effective 1 October 2026. I could not tell whether it applies to standard private endpoints, so the real meters will be read in Cost analysis.
+Prices depend on the region, the VM size, how long things run and the pricing of your subscription, so this file does not quote any. Read your own figures in Azure Cost analysis (Cost Management) after a run: the data can lag by hours, and its dates are in UTC.

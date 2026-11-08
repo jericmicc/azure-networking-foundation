@@ -102,7 +102,9 @@ The throwaway SSH key and the session variables (the public key and the reader I
 
 ## Cost
 
-Not read yet. The billed window for Stage B was about 14:20 to 15:27 UTC on 2026-10-31. Stage A had no VMs and ran for minutes. The real figure comes from Cost analysis and will be added in a later change.
+Billed: the flow log storage account and the Log Analytics workspace (by the amount of data stored and ingested), and in the second stage the three test VMs. The first stage had no VMs and ran for minutes. The second stage was billed for about an hour on 31 October 2026. Traffic Analytics is billed per GB and was not used.
+
+Prices depend on the region, the VM size, how long things run and the pricing of your subscription, so this file does not quote any. Read your own figures in Azure Cost analysis (Cost Management) after a run: the data can lag by hours, and its dates are in UTC.
 
 ## Not tested
 
