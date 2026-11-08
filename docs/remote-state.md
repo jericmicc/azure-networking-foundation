@@ -34,7 +34,7 @@ No tenant or subscription ID is stored in the repo. CI runs `terraform init -bac
 To use your own storage instead, run `terraform init -backend-config="storage_account_name=<yours>"` (add `resource_group_name` and `container_name` the same way if they differ).
 
 ## Cost
-Observed in Azure Cost Management for October 2026: under $0.01 (storage), bandwidth $0.00. Cost data can lag by up to a day.
+The state storage account is billed by the amount of data stored and the number of operations. For a lab with one small state file this is very small, but it is not zero and it runs all the time, unlike the optional test resources. Read your own figure in Azure Cost Management: the data can lag by up to a day.
 
 ## Known limitations
 - Locally redundant storage (LRS), a single region. Acceptable for a lab, not for production.

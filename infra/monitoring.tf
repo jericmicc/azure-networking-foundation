@@ -2,7 +2,7 @@
 # Off by default (deploy_monitoring = false): nothing here is created and nothing is billed.
 
 variable "deploy_monitoring" {
-  description = "Create a VNet flow log with its storage account, a Log Analytics workspace and diagnostic settings on the NSGs. A short test costs a few cents. Destroy the same day."
+  description = "Create a VNet flow log with its storage account, a Log Analytics workspace and diagnostic settings on the NSGs. Billed by the amount of data collected. Destroy the same day."
   type        = bool
   default     = false
 }
