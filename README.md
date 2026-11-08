@@ -62,7 +62,8 @@ flowchart LR
 | Remote state in Azure Storage with Entra ID auth and versioning ([details](docs/remote-state.md)) | Done |
 | Terraform plan on every pull request with OIDC login (no stored secret, read-only roles) ([evidence](docs/evidence/oidc-plan-test.md)) | Done |
 | Terraform module for the three tiers (`infra/modules/tier`: one definition of subnet, NSG and rules, used for web, app and db), checked to give an identical plan | Done |
-| Modules for the optional parts and hub-and-spoke topology | Planned |
+| Hub-and-spoke: a hub and two spokes (one in another region) joined by VNet peering, with a live test of the allowed paths and of the missing spoke to spoke path ([evidence](docs/evidence/hub-spoke-test.md)) | Done |
+| Modules for the optional parts | Planned |
 
 ## Documentation
 
@@ -105,3 +106,4 @@ Requires Terraform, the Azure CLI and an Azure subscription. The network resourc
 - Monitoring uses a VNet flow log written to a storage account and NSG logs sent to a Log Analytics workspace. Traffic Analytics is not used, because it is billed per GB. The flow log storage account keeps public network access enabled behind a firewall that denies by default and allows trusted Azure services, which is the design that was tested. Disabling public network access completely was not tested. Reading the blobs from a laptop needs an optional IP rule (`TF_VAR_flow_log_reader_ip`), which is never committed. Five Checkov findings on that account are skipped in the code, each with a written reason. See the [evidence](docs/evidence/monitoring-test.md).
 - Only the three tiers are a module (`infra/modules/tier`). The optional parts (NAT Gateway, private endpoint, monitoring, test VMs) are still flat files in `infra/`. The plan counts matched before and after the refactor for nine switch combinations, and the plan with every switch on was compared setting by setting and was identical. CI runs `tflint` on `infra` only, so it does not lint the module (a local `tflint --recursive` is clean).
 - The plan on pull requests uses a read-only identity (Reader on the subscription and Storage Blob Data Reader on the state container) and runs with `-lock=false`. It plans the default configuration only, not the code behind the optional switches. The logs are public, so the IDs are repository secrets. Fork and Dependabot pull requests skip the job. A negative test showed the identity cannot write to the state container or create a resource group. See the [evidence](docs/evidence/oidc-plan-test.md).
+- Hub and spoke is optional (`deploy_hub_spoke = true`) and has no firewall: the hub holds one shared subnet only, and traffic between spokes is blocked by the missing route and the NSGs, not inspected. Spoke 2 is in japaneast because of a 4 vCPU regional quota. Tested with TCP only, in one full run. See the [evidence](docs/evidence/hub-spoke-test.md).
