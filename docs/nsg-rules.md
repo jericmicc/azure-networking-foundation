@@ -27,6 +27,7 @@ Attached to `snet-app` (`10.10.2.0/24`).
 |---|---|---|---|---|---|---|---|
 | In | 100 | `Allow-Web-To-App-Inbound` | Allow | `10.10.1.0/24` | TCP 8443 | Deployed and checked | Only the web tier may call the application |
 | In | 4000 | `Allow-AzureLoadBalancer-Inbound` | Allow | `AzureLoadBalancer` | Any | Deployed and checked | Health probes, needed if a load balancer fronts this tier |
+| In | 110 | `Allow-Hub-Shared-To-App-Inbound` | Allow | `10.20.0.0/24` | TCP 8443 | Tested live, optional | Shared services in the hub may call the application over peering. Only with `deploy_hub_spoke` |
 | In | 4096 | `Deny-All-Inbound` | Deny | Any | Any | Deployed and checked | Closes the built-in allow-all between subnets |
 | Out | 100 | `Allow-App-To-DB-Outbound` | Allow | `10.10.3.0/24` | TCP 1433 | Deployed and checked | The application may only reach the database tier |
 | Out | 110 | `Allow-App-To-Internet-Outbound` | Allow | `Internet` | TCP 443 | Tested live, optional | Lets the application reach the internet through the NAT Gateway. Exists only when `deploy_nat_gateway` is on. Filters by port, not domain |
@@ -53,6 +54,27 @@ Attached to `snet-pe` (`10.10.4.0/24`). Exists only when `deploy_private_endpoin
 | In | 4096 | `Deny-All-Inbound` | Deny | Any | Any | Tested live, optional | Blocks the web tier, the database tier and everything else |
 | Out | 4096 | `Deny-All-Outbound` | Deny | Any | Any | Tested live, optional | The endpoint subnet starts no connections |
 
+## Hub shared tier: `nsg-hub-shared-netfound-dev-southeastasia-001`
+
+Attached to `snet-hub-shared` (`10.20.0.0/24`) in the hub VNet. Exists only when `deploy_hub_spoke` is on.
+
+| Dir | Priority | Name | Action | Peer | Port | Status | Why it exists |
+|---|---|---|---|---|---|---|---|
+| In | 100 | `Allow-Spoke2-To-Shared-Inbound` | Allow | `10.30.1.0/24` | TCP 443 | Tested live, optional | Workloads in spoke 2 may use the shared service |
+| In | 4096 | `Deny-All-Inbound` | Deny | Any | Any | Tested live, optional | Everything else is refused, including spoke 1 |
+| Out | 100 | `Allow-Shared-To-App-Outbound` | Allow | `10.10.2.0/24` | TCP 8443 | Tested live, optional | Shared services may call the application tier of spoke 1 |
+| Out | 4096 | `Deny-All-Outbound` | Deny | Any | Any | Tested live, optional | No other connection can be started |
+
+## Spoke 2 workload tier: `nsg-spoke2-workload-netfound-dev-japaneast-001`
+
+Attached to `snet-spoke2-workload` (`10.30.1.0/24`) in the spoke 2 VNet. Exists only when `deploy_hub_spoke` is on.
+
+| Dir | Priority | Name | Action | Peer | Port | Status | Why it exists |
+|---|---|---|---|---|---|---|---|
+| In | 4096 | `Deny-All-Inbound` | Deny | Any | Any | Tested live, optional | Nothing starts a connection into this subnet |
+| Out | 100 | `Allow-Workload-To-Shared-Outbound` | Allow | `10.20.0.0/24` | TCP 443 | Tested live, optional | The workload may use the shared service in the hub and nothing else |
+| Out | 4096 | `Deny-All-Outbound` | Deny | Any | Any | Tested live, optional | Spoke 2 cannot reach spoke 1 even if a route existed |
+
 ## Design notes
 
 - Azure evaluates rules from the lowest priority number to the highest and stops at the first match. Custom rules can use 100 to 4096. Built-in defaults sit at 65000 and above and cannot be edited.
@@ -71,3 +93,4 @@ Attached to `snet-pe` (`10.10.4.0/24`). Exists only when `deploy_private_endpoin
 - Ports 8443 and 1433 are placeholders.
 - The private endpoint was tested against an empty test storage account, over TCP 443 only. Network policies are enabled on `snet-pe`, so the `nsg-pe` rules apply to the endpoint. Whether a real workload needs extra rules, for example for other storage sub-resources, was not tested.
 - The rules were tested with live traffic on 22 October 2026, with the outbound design on 25 October 2026, and with the private endpoint on 27 October 2026 (see `docs/evidence/`). Each test was one full run, TCP only. UDP and ICMP were not tested.
+- The hub and spoke rules were tested with live traffic on 8 November 2026 (TCP only, one full run), see `docs/evidence/hub-spoke-test.md`.

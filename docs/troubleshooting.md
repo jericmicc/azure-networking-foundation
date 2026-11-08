@@ -135,3 +135,13 @@ Problems met while building this project, with what was seen and what fixed it. 
 ### Keep errors out of public logs
 
 - Authorization errors from Azure can contain the subscription path. In a public repository, send the error text of a command that is expected to fail to a file and print only a short message or the matched phrase.
+
+## Azure quotas and regions
+
+### The Total Regional vCPUs limit is 4 and counts every VM family
+
+- Seen: before applying five test VMs in one region, `az vm list-usage --location REGION -o table` showed a limit of 4 for Total Regional vCPUs. A single apply would have failed partway through.
+- Cause: the free-trial subscription limits the total vCPUs per region, and the limit is shared by all VM families, so changing the VM family in the same region does not help.
+- Fix: check the limit before a test (`az vm list-usage`) and spread the VMs over regions. The hub-and-spoke test put the second spoke and its VM in japaneast. The variable `test_vm_tier_names` selects which test VMs are created.
+- Region and size availability differ: the chosen small size existed in japaneast, australiaeast and centralindia but not in eastasia or koreacentral. Check with `az vm list-skus --location REGION --size SIZE -o table` before choosing a region.
+- Azure creates `NetworkWatcher_REGION` in `NetworkWatcherRG` the first time a network exists in a region. It is free and not managed by Terraform, so it is still there after a destroy.
