@@ -2,7 +2,7 @@
 # Off by default (deploy_test_vms = false) so a normal apply or CI run creates nothing billed.
 
 variable "deploy_test_vms" {
-  description = "Create the three test VMs and the web public IP. Billed. Destroy the same day."
+  description = "Create the test VMs chosen in test_vm_tier_names (default web, app, db) and the web public IP. Billed. Destroy the same day."
   type        = bool
   default     = false
 }
@@ -11,6 +11,22 @@ variable "test_vm_size" {
   description = "VM size for the test VMs. B-series is not available to this subscription in southeastasia."
   type        = string
   default     = "Standard_DC1ds_v3"
+}
+
+variable "test_vm_tier_names" {
+  description = "Which test VMs to create. Every VM uses 1 vCPU and this subscription has a Total Regional vCPUs quota of 4 in southeastasia. The hub and spoke2 VMs need deploy_hub_spoke = true."
+  type        = list(string)
+  default     = ["web", "app", "db"]
+
+  validation {
+    condition     = alltrue([for t in var.test_vm_tier_names : contains(["web", "app", "db", "hub", "spoke2"], t)])
+    error_message = "Allowed test VM names are web, app, db, hub and spoke2."
+  }
+
+  validation {
+    condition     = var.deploy_hub_spoke || !anytrue([for t in var.test_vm_tier_names : contains(["hub", "spoke2"], t)])
+    error_message = "The hub and spoke2 test VMs need deploy_hub_spoke = true."
+  }
 }
 
 variable "test_vm_ssh_public_key" {
@@ -25,17 +41,23 @@ variable "test_vm_ssh_public_key" {
 }
 
 locals {
-  test_vm_tiers = var.deploy_test_vms ? toset(["web", "app", "db"]) : toset([])
+  test_vm_tiers = var.deploy_test_vms ? toset(var.test_vm_tier_names) : toset([])
+
+  # The spoke2 VM lives in the second region, so its NIC and VM use that region and its name suffix.
+  test_vm_location = { for t in local.test_vm_tiers : t => t == "spoke2" ? var.spoke2_location : azurerm_resource_group.main.location }
+  test_vm_suffix   = { for t in local.test_vm_tiers : t => t == "spoke2" ? local.spoke2_name_suffix : local.name_suffix }
 
   tier_subnet_ids = {
-    web = module.web.subnet_id
-    app = module.app.subnet_id
-    db  = module.db.subnet_id
+    web    = module.web.subnet_id
+    app    = module.app.subnet_id
+    db     = module.db.subnet_id
+    hub    = try(module.hub_shared[0].subnet_id, "none")
+    spoke2 = try(module.spoke2_workload[0].subnet_id, "none")
   }
 }
 
 resource "azurerm_public_ip" "web_test" {
-  count               = var.deploy_test_vms ? 1 : 0
+  count               = var.deploy_test_vms && contains(var.test_vm_tier_names, "web") ? 1 : 0
   name                = "pip-web-test-${local.name_suffix}"
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
@@ -47,8 +69,8 @@ resource "azurerm_public_ip" "web_test" {
 resource "azurerm_network_interface" "test" {
   #checkov:skip=CKV_AZURE_119: Deliberate public IP on the web test VM, temporary.
   for_each            = local.test_vm_tiers
-  name                = "nic-${each.key}-${local.name_suffix}"
-  location            = azurerm_resource_group.main.location
+  name                = "nic-${each.key}-${local.test_vm_suffix[each.key]}"
+  location            = local.test_vm_location[each.key]
   resource_group_name = azurerm_resource_group.main.name
   tags                = local.tags
 
@@ -62,8 +84,8 @@ resource "azurerm_network_interface" "test" {
 
 resource "azurerm_linux_virtual_machine" "test" {
   for_each                        = local.test_vm_tiers
-  name                            = "vm-${each.key}-${local.name_suffix}"
-  location                        = azurerm_resource_group.main.location
+  name                            = "vm-${each.key}-${local.test_vm_suffix[each.key]}"
+  location                        = local.test_vm_location[each.key]
   resource_group_name             = azurerm_resource_group.main.name
   size                            = var.test_vm_size
   admin_username                  = "azureadmin"
@@ -74,9 +96,10 @@ resource "azurerm_linux_virtual_machine" "test" {
 
   custom_data = base64encode(templatefile("${path.module}/test-vms-cloud-init.tftpl", {
     tier   = each.key
-    web_ip = azurerm_network_interface.test["web"].private_ip_address
-    app_ip = azurerm_network_interface.test["app"].private_ip_address
-    db_ip  = azurerm_network_interface.test["db"].private_ip_address
+    web_ip = try(azurerm_network_interface.test["web"].private_ip_address, "none")
+    app_ip = try(azurerm_network_interface.test["app"].private_ip_address, "none")
+    db_ip  = try(azurerm_network_interface.test["db"].private_ip_address, "none")
+    hub_ip = try(azurerm_network_interface.test["hub"].private_ip_address, "none")
     nat    = var.deploy_nat_gateway
     nat_ip = try(azurerm_public_ip.nat_app[0].ip_address, "none")
     pe     = var.deploy_private_endpoint

@@ -30,3 +30,16 @@ Unallocated: `10.10.0.0/24`, `10.10.5.64` to `10.10.5.255`, and `10.10.6.0` to `
 - Subnet ranges are sized for a reference implementation. In a real organization the VNet range would be allocated from a central IP address management (IPAM) plan.
 - Subnets are numbered so the third octet matches the tier order (web = 1, app = 2, db = 3, private endpoints = 4, bastion = 5). `10.10.0.0/24` is intentionally left unused to keep that numbering readable.
 - `snet-pe` has private endpoint network policies enabled, so its NSG applies to the endpoint. In the test, the private endpoint received `10.10.4.4`, the first usable address after the five that Azure reserves.
+
+## Hub and spoke (optional, `deploy_hub_spoke`)
+
+Spoke 1 is the virtual network above. The ranges below do not overlap with it or with each other, which is required for peering.
+
+| Name | Region | Address space | Subnet | Subnet CIDR | Status |
+|---|---|---|---|---|---|
+| `vnet-hub-netfound-dev-southeastasia-001` | southeastasia | `10.20.0.0/22` | `snet-hub-shared` | `10.20.0.0/24` | Tested live, optional |
+| `vnet-spoke2-netfound-dev-japaneast-001` | japaneast | `10.30.0.0/20` | `snet-spoke2-workload` | `10.30.1.0/24` | Tested live, optional |
+
+- The hub range is a /22, which leaves room for more hub subnets later (for example a firewall subnet, which needs at least a /26). None of them are created or reserved in code.
+- Spoke 2 follows the same numbering pattern as spoke 1 (third octet 1 for the first workload subnet).
+- Spoke 2 is in japaneast because the subscription has a limit of 4 vCPUs per region, which five test VMs in one region would exceed. See `docs/troubleshooting.md`.
