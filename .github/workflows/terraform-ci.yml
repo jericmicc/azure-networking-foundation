@@ -66,7 +66,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
 
       - name: Run tflint
-        run: tflint
+        run: tflint --recursive
 
   plan:
     # Only for pull requests from branches of this repo. Fork pull requests and Dependabot get no
