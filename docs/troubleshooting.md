@@ -56,6 +56,13 @@ Problems met while building this project, with what was seen and what fixed it. 
 
 - The built-in NSG rules at priority 65000 allow all traffic between subnets of the same VNet. Without an explicit deny at 4096 in each NSG, the web tier could reach the database directly. See the [traffic matrix](traffic-matrix.md).
 
+### terraform test: unknown provider, or tests that cannot find anything
+
+- `Error: unknown provider registry.terraform.io/hashicorp/azurerm` means the folder was never initialised. Run `terraform init -backend=false` inside `infra/`. The flag skips the remote state, so no Azure login is needed.
+- Run `terraform test` from `infra/`, not from the repository root or a subfolder. Test files live in `infra/tests/`.
+- A tarball stores relative paths. Unpack it from the repository root, or the files land in a second `infra/infra/` folder.
+- A run that expects a failure (`expect_failures`) fails if a different validation rule also fails. Supply valid values for everything except the one rule under test.
+
 ## Checkov and CI
 
 ### CI did not scan the code behind a switch
