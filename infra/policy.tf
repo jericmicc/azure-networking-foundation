@@ -135,7 +135,7 @@ resource "azurerm_policy_set_definition" "guardrails" {
     policy_definition_id = data.azurerm_policy_definition_built_in.allowed_locations[0].id
     reference_id         = "allowed-locations"
     parameter_values = jsonencode({
-      effect               = { value = "Deny" }
+      effect                 = { value = "Deny" }
       listOfAllowedLocations = { value = "[parameters('allowedLocations')]" }
     })
   }
