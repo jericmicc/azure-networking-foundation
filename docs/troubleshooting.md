@@ -63,6 +63,22 @@ Problems met while building this project, with what was seen and what fixed it. 
 - A tarball stores relative paths. Unpack it from the repository root, or the files land in a second `infra/infra/` folder.
 - A run that expects a failure (`expect_failures`) fails if a different validation rule also fails. Supply valid values for everything except the one rule under test.
 
+## Azure Policy
+
+### RequestDisallowedByPolicy or RequestDisallowedByAzure
+
+- `RequestDisallowedByPolicy` means a policy assignment refused the request. The error names the policy and the assignment. See [policy](policy.md).
+- `RequestDisallowedByAzure` is not a policy. It means the subscription or the region is restricted (seen when creating a VNet in `westeurope` on a trial subscription). A test of a policy only counts if the error code is the first one.
+
+### A policy test passes or fails right after an apply
+
+- A new assignment or a changed enforcement mode takes minutes to apply, and an apply of the assignment itself took about 1m45s. Wait about five minutes before testing.
+- Compliance lags further behind. `az policy state trigger-scan --resource-group RG` starts an evaluation and waits for it, then `az policy state summarize` shows the counts.
+
+### The web test VM has no public IP
+
+- With `deploy_policy = true` the public IP of the web test VM is not created, because the NIC rule would refuse it. Reach the VM another way, or set `deploy_policy = false` for that test.
+
 ## Checkov and CI
 
 ### CI did not scan the code behind a switch
