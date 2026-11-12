@@ -68,6 +68,7 @@ resource "azurerm_public_ip" "web_test" {
 
 resource "azurerm_network_interface" "test" {
   #checkov:skip=CKV_AZURE_119: Deliberate public IP on the web test VM, temporary.
+  #checkov:skip=CKV2_AZURE_39: Same deliberate, temporary public IP on the web test VM. It is not created at all when deploy_policy is on.
   for_each            = local.test_vm_tiers
   name                = "nic-${each.key}-${local.test_vm_suffix[each.key]}"
   location            = local.test_vm_location[each.key]

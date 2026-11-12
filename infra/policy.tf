@@ -59,7 +59,7 @@ resource "azurerm_policy_definition" "deny_mgmt_ports_from_internet" {
   description  = "Denies an inbound Allow NSG rule for port 22, port 3389 or every port from the internet or from any source."
 
   policy_rule = jsonencode({
-    if = {
+    "if" = {
       allOf = [
         { field = "type", equals = local.nsg_rule_field },
         { field = "${local.nsg_rule_field}/access", equals = "Allow" },
@@ -135,7 +135,7 @@ resource "azurerm_policy_set_definition" "guardrails" {
     policy_definition_id = data.azurerm_policy_definition_built_in.allowed_locations[0].id
     reference_id         = "allowed-locations"
     parameter_values = jsonencode({
-      effect                 = { value = "Deny" }
+      effect               = { value = "Deny" }
       listOfAllowedLocations = { value = "[parameters('allowedLocations')]" }
     })
   }
