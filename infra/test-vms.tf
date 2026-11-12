@@ -2,7 +2,7 @@
 # Off by default (deploy_test_vms = false) so a normal apply or CI run creates nothing billed.
 
 variable "deploy_test_vms" {
-  description = "Create the test VMs chosen in test_vm_tier_names (default web, app, db) and the web public IP. Billed. Destroy the same day."
+  description = "Create the test VMs chosen in test_vm_tier_names (default web, app, db) and the web public IP (not created when deploy_policy is on, because the policy denies public IPs on network interfaces). Billed. Destroy the same day."
   type        = bool
   default     = false
 }
@@ -57,7 +57,7 @@ locals {
 }
 
 resource "azurerm_public_ip" "web_test" {
-  count               = var.deploy_test_vms && contains(var.test_vm_tier_names, "web") ? 1 : 0
+  count               = var.deploy_test_vms && contains(var.test_vm_tier_names, "web") && !var.deploy_policy ? 1 : 0
   name                = "pip-web-test-${local.name_suffix}"
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
@@ -78,7 +78,7 @@ resource "azurerm_network_interface" "test" {
     name                          = "internal"
     subnet_id                     = local.tier_subnet_ids[each.key]
     private_ip_address_allocation = "Dynamic"
-    public_ip_address_id          = each.key == "web" ? azurerm_public_ip.web_test[0].id : null
+    public_ip_address_id          = each.key == "web" ? one(azurerm_public_ip.web_test[*].id) : null
   }
 }
 

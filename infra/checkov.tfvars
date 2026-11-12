@@ -5,4 +5,5 @@ deploy_nat_gateway      = true
 deploy_private_endpoint = true
 deploy_monitoring       = true
 deploy_hub_spoke        = true
+deploy_policy           = true
 test_vm_tier_names      = ["web", "app", "db", "hub", "spoke2"]

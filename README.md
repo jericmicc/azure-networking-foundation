@@ -55,6 +55,7 @@ flowchart LR
 | Web subnet (no default outbound access) and web NSG with deny-by-default inbound | Done |
 | CI: format check, init, validate, tflint with the Azure ruleset and a pinned Checkov security scan (blocking, including the optional code behind the switches) on every push and pull request, with documented failing tests ([Checkov](docs/evidence/ci-negative-test.md), [tflint](docs/evidence/tflint-negative-test.md), [tflint on the modules](docs/evidence/tflint-recursive-test.md), [Checkov on switch-gated code](docs/evidence/checkov-switch-gated-negative-test.md)) | Done |
 | Unit tests (`terraform test`, mock provider, no Azure login): 15 tests that fail the build if a security rule is weakened, with a [documented failing test](docs/evidence/unit-tests.md) | Done |
+| Azure Policy guardrails: five rules that make Azure refuse unsafe changes made by hand (public IPs, open management ports, public storage, other regions), switch-gated, tested live in enforced and report only mode ([evidence](docs/evidence/policy-test.md)) | Done |
 | App and database subnets with NSGs, tested with live traffic on three small VMs ([evidence](docs/evidence/live-traffic-test.md)) | Done |
 | Routing and outbound design: optional NAT Gateway on the app tier and a route table on the database subnet, tested with live traffic ([evidence](docs/evidence/outbound-nat-test.md)) | Done |
 | Private endpoint and private DNS: a storage account on a private IP with a linked private DNS zone, tested with live traffic ([evidence](docs/evidence/private-endpoint-test.md)) | Done |
@@ -71,6 +72,7 @@ flowchart LR
 - [IP address plan](docs/ip-address-plan.md): subnet ranges and the reasoning behind them
 - [NSG rules](docs/nsg-rules.md): every rule, its priority and why it exists, based on the [traffic matrix](docs/traffic-matrix.md)
 - [Evidence](docs/evidence/): command output captured before each teardown
+- [Azure Policy guardrails](docs/policy.md): the five rules, how to roll them out in two modes, limits
 - [Remote state](docs/remote-state.md): why state lives in Azure Storage, the bootstrap script, settings, cost and limits
 - [Troubleshooting](docs/troubleshooting.md): problems met while building this, what was seen and what fixed them
 
@@ -80,7 +82,7 @@ flowchart LR
 - No credentials or subscription IDs in code: authentication uses the Azure CLI login
 - Pinned Terraform and provider versions, with the lock file committed
 - Names follow the Microsoft Cloud Adoption Framework pattern: type, workload, environment, region, instance
-- Plan before apply, destroy after every session. Changes to `main` go through pull requests with required CI checks (format, validate, tflint, Checkov)
+- Plan before apply, destroy after every session. Changes to `main` go through pull requests with required CI checks (format, validate, tflint, Checkov, unit tests, plan)
 
 ## Run it yourself
 

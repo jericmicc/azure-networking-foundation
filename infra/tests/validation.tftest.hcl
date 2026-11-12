@@ -18,7 +18,7 @@ run "hub_test_vm_needs_the_hub_switch" {
   variables {
     deploy_test_vms        = true
     test_vm_tier_names     = ["hub"]
-    test_vm_ssh_public_key = "ssh-ed25519 AAAAFAKEKEYFORTESTSONLY"
+    test_vm_ssh_public_key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINvzE3cJVmV6cyC8T44SFNEZeePmRZYwNkGKMzenTX77 unit-test-only-throwaway"
   }
 
   expect_failures = [var.test_vm_tier_names]
